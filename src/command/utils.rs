@@ -39,7 +39,6 @@ fn find_manifest_from_cwd() -> Result<PathBuf> {
 pub fn create_pkg_dir(out_dir: &Path) -> Result<()> {
     let _ = fs::remove_file(out_dir.join("package.json")); // Clean up package.json from previous runs
     fs::create_dir_all(&out_dir)?;
-    fs::write(out_dir.join(".gitignore"), "*")?;
     Ok(())
 }
 

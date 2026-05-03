@@ -3,11 +3,7 @@
 The `wasm-pack build` command creates the files necessary for JavaScript
 interoperability and for publishing a package to npm. This involves compiling
 your code to wasm and generating a pkg folder. This pkg folder will contain the
-wasm binary, a JS wrapper file, your `README`, and a `package.json` file.
-
-The `pkg` directory is automatically `.gitignore`d by default, since it contains
-build artifacts which are not intended to be checked into version
-control.<sup>[0](#footnote-0)</sup>
+wasm binary, a JS wrapper file, your `README`, and a `package.json` file.<sup>[0](#footnote-0)</sup>
 
 ## Path
 
@@ -140,6 +136,5 @@ wasm-pack build examples/js-hello-world --mode no-install -- --offline
 
 <hr style="font-size: 1.5em; margin-top: 2.5em"/>
 
-<sup id="footnote-0">0</sup> If you need to include additional assets in the pkg
-directory and your NPM package, we intend to have a solution for your use case
-soon. [↩](#wasm-pack-build)
+<sup id="footnote-0">0</sup> In contrast to previous releases, a `.gitignore`
+file is no longer created in the `pkg` directory. [↩](#wasm-pack-build)
