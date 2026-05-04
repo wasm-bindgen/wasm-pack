@@ -12,6 +12,10 @@
 # This is just a little script that can be downloaded from the internet to
 # install wasm-pack. It just does platform detection, downloads the installer
 # and runs it.
+if [ -z "$BASH_VERSION" ]; then
+    curl https://drager.github.io/wasm-pack/installer/init.sh -sSf | bash
+    exit "$?"
+fi
 
 set -u
 
@@ -38,6 +42,11 @@ if [ -z "${VERSION:-}" ]; then
         VERSION="latest"
     fi
 fi
+
+err() {
+    say "$1" >&2
+    exit 1
+}
 
 # Resolve "latest" to actual version number
 if [ "$VERSION" = "latest" ]; then
@@ -185,11 +194,6 @@ get_architecture() {
 
 say() {
     echo "wasm-pack-init: $1"
-}
-
-err() {
-    say "$1" >&2
-    exit 1
 }
 
 need_cmd() {
