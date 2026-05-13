@@ -3,6 +3,12 @@
   "version": "0.14.0",
   "description": "📦✨ your favorite rust -> wasm workflow tool!",
   "main": "binary.js",
+  "files": [
+    "binary.js",
+    "install.js",
+    "run.js",
+    "README.md"
+  ],
   "scripts": {
     "postinstall": "node ./install.js"
   },
@@ -22,17 +28,16 @@
     "npm",
     "package"
   ],
-  "author": "Jesper Håkansson <jesper@jesperh.se>",
+  "author": "wasm-bindgen Contributors",
   "license": "MIT OR Apache-2.0",
   "bugs": {
     "url": "https://github.com/wasm-bindgen/wasm-pack/issues"
   },
   "homepage": "https://github.com/wasm-bindgen/wasm-pack#readme",
-  "dependencies": {
-    "binary-install": "^1.1.2"
+  "engines": {
+    "node": ">=16"
   },
-  "resolutions": {
-    "tar": "^7.5.3",
-    "axios": "^0.30.0"
+  "dependencies": {
+    "tar": "^7.5.3"
   }
 }

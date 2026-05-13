@@ -216,3 +216,35 @@ jobs:
           asset_path: ./wasm-pack-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_ARM64_TARGET }}.tar.gz
           asset_content_type: application/gzip
           asset_name: wasm-pack-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_ARM64_TARGET }}.tar.gz
+
+  npm-publish:
+    name: Publish npm package
+    needs: release
+    # Requires the NPM_TOKEN repository secret.
+    if: ${{ github.repository == 'wasm-bindgen/wasm-pack' }}
+    permissions:
+      contents: read
+      id-token: write  # required for npm provenance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Sync npm package version to release tag
+        shell: bash
+        working-directory: npm
+        run: |
+          # Strip the leading "v" from the tag (e.g. "v0.14.1" -> "0.14.1").
+          version="${GITHUB_REF##*/v}"
+          echo "Publishing npm wasm-pack@${version}"
+          npm version --no-git-tag-version --allow-same-version "${version}"
+
+      - name: Publish to npm
+        working-directory: npm
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
