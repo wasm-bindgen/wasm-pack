@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Copyright 2016 The Rust Project Developers. See the COPYRIGHT
 # file at the top-level directory of this distribution and at
 # http://rust-lang.org/COPYRIGHT.
@@ -15,29 +15,43 @@
 
 set -u
 
-# Parse VERSION from environment or --version argument, default to "latest"
-if [ -z "${VERSION:-}" ]; then
-    VERSION=""
-    ORIG_ARGS=("$@")
-    
-    while [ $# -gt 0 ]; do
-        case $1 in
-            --version)
-                VERSION="$2"
-                shift 2
-                ;;
-            *)
-                shift
-                ;;
-        esac
+# The version baked in at build time by docs/_installer/build-installer.rs.
+# The sentinel below is replaced with the published release tag (e.g. "v0.14.0").
+DEFAULT_VERSION="@@WASM_PACK_VERSION@@"
+
+say() {
+    echo "wasm-pack-init: $1"
+}
+
+err() {
+    say "$1" >&2
+    exit 1
+}
+
+# Resolve VERSION precedence: explicit env > --version arg > build-time default > "latest".
+# We scan args without consuming them so they pass through unchanged to the installer.
+resolve_version() {
+    if [ -n "${VERSION:-}" ]; then
+        return
+    fi
+
+    _prev=""
+    for _arg in "$@"; do
+        if [ "$_prev" = "--version" ]; then
+            VERSION="$_arg"
+            return
+        fi
+        _prev="$_arg"
     done
-    
-    set -- "${ORIG_ARGS[@]}"
-    
-    if [ -z "$VERSION" ]; then
+
+    if [ -n "$DEFAULT_VERSION" ]; then
+        VERSION="$DEFAULT_VERSION"
+    else
         VERSION="latest"
     fi
-fi
+}
+
+resolve_version "$@"
 
 # Resolve "latest" to actual version number
 if [ "$VERSION" = "latest" ]; then
@@ -47,7 +61,7 @@ if [ "$VERSION" = "latest" ]; then
     fi
 fi
 
-# Normalize version format for download URL
+# Normalize version format for download URL (ensure leading "v")
 case "$VERSION" in
     v*) ;;
     *) VERSION="v$VERSION" ;;
@@ -68,10 +82,10 @@ main() {
     need_cmd dirname
 
     get_architecture || return 1
-    local _arch="$RETVAL"
+    _arch="$RETVAL"
     assert_nz "$_arch" "arch"
 
-    local _ext=""
+    _ext=""
     case "$_arch" in
         *windows*)
             _ext=".exe"
@@ -80,13 +94,13 @@ main() {
 
     which rustup > /dev/null 2>&1
     need_ok "failed to find Rust installation, is rustup installed?"
-    local _rustup=$(which rustup)
-    local _tardir="wasm-pack-$VERSION-${_arch}"
-    local _url="$UPDATE_ROOT/${_tardir}.tar.gz"
-    local _dir="$(mktemp -d 2>/dev/null || ensure mktemp -d -t wasm-pack)"
-    local _file="$_dir/input.tar.gz"
-    local _wasmpack="$_dir/wasm-pack$_ext"
-    local _wasmpackinit="$_dir/wasm-pack-init$_ext"
+    _rustup=$(which rustup)
+    _tardir="wasm-pack-$VERSION-${_arch}"
+    _url="$UPDATE_ROOT/${_tardir}.tar.gz"
+    _dir="$(mktemp -d 2>/dev/null || ensure mktemp -d -t wasm-pack)"
+    _file="$_dir/input.tar.gz"
+    _wasmpack="$_dir/wasm-pack$_ext"
+    _wasmpackinit="$_dir/wasm-pack-init$_ext"
 
     printf '%s\n' 'info: downloading wasm-pack' 1>&2
 
@@ -112,7 +126,7 @@ main() {
       "$_wasmpackinit" "$@"
     fi
 
-    local _retval=$?
+    _retval=$?
 
     ignore rm -rf "$_dir"
 
@@ -120,8 +134,8 @@ main() {
 }
 
 get_architecture() {
-    local _ostype="$(uname -s)"
-    local _cputype="$(uname -m)"
+    _ostype="$(uname -s)"
+    _cputype="$(uname -m)"
 
     # This is when installing inside docker, or can be useful to side-step
     # the script's built-in platform detection heuristic (if it drifts again in the future)
@@ -139,21 +153,21 @@ get_architecture() {
     if [ "$_ostype" = Darwin ] && [ "$_cputype" = i386 ]; then
         # Darwin `uname -s` lies
         if sysctl hw.optional.x86_64 | grep -q ': 1'; then
-            local _cputype=x86_64
+            _cputype=x86_64
         fi
     fi
 
     case "$_ostype" in
         Linux | linux)
-            local _ostype=unknown-linux-musl
+            _ostype=unknown-linux-musl
             ;;
 
         Darwin)
-            local _ostype=apple-darwin
+            _ostype=apple-darwin
             ;;
 
         MINGW* | MSYS* | CYGWIN*)
-            local _ostype=pc-windows-msvc
+            _ostype=pc-windows-msvc
             ;;
 
         *)
@@ -163,10 +177,10 @@ get_architecture() {
 
     case "$_cputype" in
         x86_64 | x86-64 | x64 | amd64)
-            local _cputype=x86_64
+            _cputype=x86_64
             ;;
         arm64 | aarch64)
-            local _cputype=aarch64
+            _cputype=aarch64
             ;;
         *)
             err "no precompiled binaries available for CPU architecture: $_cputype"
@@ -178,18 +192,9 @@ get_architecture() {
         _cputype="x86_64"
     fi
 
-    local _arch="$_cputype-$_ostype"
+    _arch="$_cputype-$_ostype"
 
     RETVAL="$_arch"
-}
-
-say() {
-    echo "wasm-pack-init: $1"
-}
-
-err() {
-    say "$1" >&2
-    exit 1
 }
 
 need_cmd() {

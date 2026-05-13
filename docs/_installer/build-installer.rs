@@ -26,5 +26,5 @@ fn fixup(input: &str) -> String {
         .unwrap();
     let version = &version[version.find('"').unwrap() + 1..version.rfind('"').unwrap()];
 
-    input.replace("$VERSION", &format!("v{}", version))
+    input.replace("@@WASM_PACK_VERSION@@", &format!("v{}", version))
 }
