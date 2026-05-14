@@ -673,6 +673,7 @@ impl CrateData {
             let js_bg_file = format!("{}_bg.js", name_prefix);
             files.push(js_bg_file);
         }
+        files.push("snippets".into());
 
         let pkg = &self.data.packages[self.current_idx];
         let npm_name = match scope {
