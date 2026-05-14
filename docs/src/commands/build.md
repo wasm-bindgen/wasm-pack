@@ -22,15 +22,18 @@ path is given, the `build` command will run in the current directory.
 
 ## Output Directory
 
-By default, `wasm-pack` will generate a directory for its build output called `pkg`.
-If you'd like to customize this you can use the `--out-dir` flag.
+By default, `wasm-pack` generates a directory for its build output called `pkg` 
+in the same directory as the `Cargo.toml` file.
+Use the `--out-dir` flag to place the build output in a different location.
 
-```
-wasm-pack build --out-dir out
-```
+Examples with and without the `--out-dir` flag:
 
-The above command will put your build artifacts in a directory called `out`, instead
-of the default `pkg`.
+- `wasm-pack build` - creates `pkg` directory next to `Cargo.toml` file
+- `wasm-pack build --out-dir out` - creates `out` directory next to `Cargo.toml` file
+- `wasm-pack build examples/js-hello-world --out-dir ../builds/js-hello-world` -
+creates `examples/builds/js-hello-world`
+
+The `--out-dir` path can be absolute or relative to the directory that contains the `Cargo.toml` file.
 
 ## Generated file names
 
