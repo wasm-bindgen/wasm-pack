@@ -48,7 +48,11 @@ pub fn copy_from_crate(crate_data: &CrateData, path: &Path, out_dir: &Path) -> R
         "crate's pkg directory should exist"
     );
 
-    match (crate_data.crate_license(), crate_data.crate_license_file()) {
+    match (
+        crate_data.crate_license().as_deref(),
+        crate_data.crate_license_file(),
+    ) {
+        (Some("NONE" | "LicenseRef-None"), _) => {}
         (Some(_), _) => {
             let license_files = glob_license_files(path);
 
