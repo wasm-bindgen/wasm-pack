@@ -12,7 +12,7 @@
   </p>
 
   <h3>
-    <a href="https://drager.github.io/wasm-pack/book">Docs</a>
+    <a href="https://wasm-bindgen.github.io/wasm-pack/book">Docs</a>
     <span> | </span>
     <a href="https://github.com/wasm-bindgen/wasm-pack/blob/master/CONTRIBUTING.md">Contributing</a>
     <span> | </span>

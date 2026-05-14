@@ -1,7 +1,7 @@
 [package]
 name = "wasm-pack"
 description = "📦✨ your favorite rust -> wasm workflow tool!"
-version = "0.14.0"
+version = "0.15.0"
 authors = ["Ashley Williams <ashley666ashley@gmail.com>", "Jesper Håkansson <jesper@jesperh.se>"]
 repository = "https://github.com/wasm-bindgen/wasm-pack.git"
 license = "MIT OR Apache-2.0"

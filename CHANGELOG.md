@@ -2,6 +2,87 @@
 
 ## 🤍 Unreleased
 
+## 🌷 0.15.0
+
+- ### ✨ Features
+
+  - **Add wasm64-unknown-unknown target support - [audreyt], [pull/1553]**
+
+    Parameterizes the target triple in `cargo_build_wasm()` and `cargo_build_wasm_tests()`, extracts `--target` from extra options, adds `--enable-memory64` to wasm-opt args for wasm64 targets, and dynamically constructs the `CARGO_TARGET_*_RUNNER` env var from the target triple.
+
+    [pull/1553]: https://github.com/wasm-bindgen/wasm-pack/pull/1553
+    [audreyt]: https://github.com/audreyt
+
+  - **Add `--panic-unwind` flag to build and test commands - [guybedford], [pull/1572]**
+
+    [pull/1572]: https://github.com/wasm-bindgen/wasm-pack/pull/1572
+
+  - **Move `wasm-pack-template` into the repo - [guybedford], [pull/1573]**
+
+    Vendors the project template directly into this repository so `wasm-pack new` no longer depends on a separate external template repo.
+
+    [pull/1573]: https://github.com/wasm-bindgen/wasm-pack/pull/1573
+
+- ### 🤕 Fixes
+
+  - **Replace deprecated `binary-install` and add release auto-publish - [guybedford], [pull/1579]**
+
+    The 0.14.0 npm package shipped with the old `drager/wasm-pack` release URL and was never republished after the repository moved, so `npm install -g wasm-pack` failed with a 404. This inlines the install/run logic into `npm/binary.js`, drops the deprecated `binary-install` dependency (which pulled in unmaintained `rimraf@3`, `glob@7`, `inflight`, and `tar@6`), promotes `tar` to a real dependency, and adds release workflow automation so the npm package no longer requires a manual `npm publish`.
+
+    [pull/1579]: https://github.com/wasm-bindgen/wasm-pack/pull/1579
+
+  - **Make `init.sh` POSIX-compatible and stop mangling `$VERSION` - [guybedford], [pull/1578]**
+
+    [pull/1578]: https://github.com/wasm-bindgen/wasm-pack/pull/1578
+    [guybedford]: https://github.com/guybedford
+
+  - **Add trailing newline in `package.json` - [joaofreires], [pull/1162]**
+
+    [pull/1162]: https://github.com/wasm-bindgen/wasm-pack/pull/1162
+    [joaofreires]: https://github.com/joaofreires
+
+  - **Fix `drager` → `wasm-bindgen` in URLs - [akesling], [pull/1571]**
+
+    [pull/1571]: https://github.com/wasm-bindgen/wasm-pack/pull/1571
+    [akesling]: https://github.com/akesling
+
+- ### 🛠️ Maintenance
+
+  - **Bump follow-redirects from 1.15.11 to 1.16.0 in /npm - [dependabot], [pull/1565]**
+
+    [pull/1565]: https://github.com/wasm-bindgen/wasm-pack/pull/1565
+
+  - **Bump rustls-webpki from 0.103.9 to 0.103.13 - [dependabot], [pull/1570]**
+
+    [pull/1570]: https://github.com/wasm-bindgen/wasm-pack/pull/1570
+
+  - **Bump brace-expansion from 1.1.12 to 1.1.14 in /npm - [dependabot], [pull/1574]**
+
+    [pull/1574]: https://github.com/wasm-bindgen/wasm-pack/pull/1574
+
+  - **Bump tar from 0.4.44 to 0.4.45 - [dependabot], [pull/1559]**
+
+    [pull/1559]: https://github.com/wasm-bindgen/wasm-pack/pull/1559
+
+  - **Bump time from 0.3.45 to 0.3.47 - [dependabot], [pull/1549]**
+
+    [pull/1549]: https://github.com/wasm-bindgen/wasm-pack/pull/1549
+
+  - **Bump minimatch from 3.1.2 to 3.1.5 in /npm - [dependabot], [pull/1555]**
+
+    [pull/1555]: https://github.com/wasm-bindgen/wasm-pack/pull/1555
+
+- ### 📖 Documentation
+
+  - **Update documentation and references to the new GitHub repo - [qinyuhang], [pull/1567]**
+
+    [pull/1567]: https://github.com/wasm-bindgen/wasm-pack/pull/1567
+
+  - **Fix typo in prerequisites documentation - [pRizz], [pull/1545]**
+
+    [pull/1545]: https://github.com/wasm-bindgen/wasm-pack/pull/1545
+    [pRizz]: https://github.com/pRizz
+
 ## 🌻 0.14.0
 
 - ### ✨ Features
