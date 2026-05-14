@@ -144,6 +144,11 @@ struct CrateInformation {
     max_version: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct WasmBindgenPackageJson {
+    dependencies: Option<HashMap<String, String>>,
+}
+
 impl Crate {
     /// Returns latest wasm-pack version
     pub fn return_wasm_pack_latest_version() -> Result<Option<String>> {
@@ -634,9 +639,8 @@ impl CrateData {
         // we merge the NPM dependencies already specified in it.
         let existing_deps = if pkg_file_path.exists() {
             // It's just a map of dependency names to versions
-            Some(serde_json::from_str::<HashMap<String, String>>(
-                &fs::read_to_string(&pkg_file_path)?,
-            )?)
+            serde_json::from_str::<WasmBindgenPackageJson>(&fs::read_to_string(&pkg_file_path)?)?
+                .dependencies
         } else {
             None
         };
