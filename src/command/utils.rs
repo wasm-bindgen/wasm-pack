@@ -3,6 +3,8 @@
 
 use anyhow::Result;
 use std::fs;
+use std::fs::OpenOptions;
+use std::io::{ErrorKind, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use walkdir::WalkDir;
@@ -39,8 +41,20 @@ fn find_manifest_from_cwd() -> Result<PathBuf> {
 pub fn create_pkg_dir(out_dir: &Path) -> Result<()> {
     let _ = fs::remove_file(out_dir.join("package.json")); // Clean up package.json from previous runs
     fs::create_dir_all(&out_dir)?;
-    fs::write(out_dir.join(".gitignore"), "*")?;
-    Ok(())
+
+    let file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(out_dir.join(".gitignore"))
+        .map(|mut f| f.write_all(b"*"));
+
+    match file {
+        Ok(_) => Ok(()),
+        Err(e) => match e.kind() {
+            ErrorKind::AlreadyExists => Ok(()),
+            _ => Err(e.into()),
+        },
+    }
 }
 
 /// Locates the pkg directory from a specific path
