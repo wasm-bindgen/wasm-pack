@@ -1,0 +1,1393 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Hello wasm-pack!</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-2caa9865.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-c95d8ef8.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <style>
+                  header.warning {
+                    background-color: rgb(242, 222, 222);
+                    border-bottom-color: rgb(238, 211, 215);
+                    border-bottom-left-radius: 4px;
+                    border-bottom-right-radius: 4px;
+                    border-bottom-style: solid;
+                    border-bottom-width: 0.666667px;
+                    border-image-outset: 0 0 0 0;
+                    border-image-repeat: stretch stretch;
+                    border-image-slice: 100% 100% 100% 100%;
+                    border-image-source: none;
+                    border-image-width: 1 1 1 1;
+                    border-left-color: rgb(238, 211, 215);
+                    border-left-style: solid;
+                    border-left-width: 0.666667px;
+                    border-right-color: rgb(238, 211, 215);
+                    border-right-style: solid;
+                    border-right-width: 0.666667px;
+                    border-top-color: rgb(238, 211, 215);
+                    border-top-left-radius: 4px;
+                    border-top-right-radius: 4px;
+                    border-top-style: solid;
+                    border-top-width: 0.666667px;
+                    color: rgb(185, 74, 72);
+                    margin-bottom: 0px;
+                    margin-left: 0px;
+                    margin-right: 0px;
+                    margin-top: 30px;
+                    padding-bottom: 8px;
+                    padding-left: 14px;
+                    padding-right: 35px;
+                    padding-top: 8px;
+                    text-align: center;
+                  }
+                </style>
+                <header class='warning'>
+                  <p>
+                    This is the <strong>unpublished</strong> documentation of
+                    <code>wasm-pack</code>, the published documentation is available
+                    <a href="https://wasm-bindgen.github.io/wasm-pack/">
+                      on the main Rust and WebAssembly documentation site
+                    </a>. Features documented here may not be available in released versions of
+                    <code>wasm-pack</code>.
+                  </p>
+                </header>
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Hello wasm-pack!</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="introduction"><a href="#introduction" class="header">Introduction</a></h1>
+<p><img src="https://wasm-bindgen.github.io/wasm-pack/public/img/wasm-ferris.png" alt="wasm ferris"></p>
+<h1 style="text-align: center;">Welcome to the <code>wasm-pack</code> docs!</h1>
+
+<p>This tool seeks to be a one-stop shop for building and working with rust-
+generated WebAssembly that you would like to interop with JavaScript, in the
+browser or with Node.js. <code>wasm-pack</code> helps you build rust-generated
+WebAssembly packages that you could publish to the npm registry, or otherwise use
+alongside any javascript packages in workflows that you already use, such as <a href="https://webpack.js.org/">webpack</a>.</p>
+<p><img src="https://github.com/wasm-bindgen/wasm-pack/raw/master/demo.gif" alt="demo"></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="quickstart"><a class="header" href="#quickstart">Quickstart</a></h1>
+<ol>
+<li>Install <code>rust</code> using <a href="https://rustup.rs/"><code>rustup</code></a>.</li>
+<li><a href="https://wasm-bindgen.github.io/wasm-pack/installer/">Install this tool.</a></li>
+<li>Run <code>wasm-pack new hello-wasm</code>.</li>
+<li><code>cd hello-wasm</code></li>
+<li>Run <code>wasm-pack build --target web</code>.</li>
+<li>This tool generates files in a <code>pkg</code> dir</li>
+<li>Import it: <code>import init, { greet } from "./pkg/hello_wasm.js"</code>, initialize it: <code>await init()</code>, and then use it: <code>greet()</code></li>
+<li>To publish to npm, run <code>wasm-pack publish</code>. You may need to login to the
+registry you want to publish to. You can login using <code>wasm-pack login</code>.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h1>
+<p>First you’ll want to <a href="https://wasm-bindgen.github.io/wasm-pack/installer/">install the <code>wasm-pack</code> CLI</a>, and <code>wasm-pack -V</code> should print the version that you just installed.</p>
+<p>Next, since <code>wasm-pack</code> is a build tool, you’ll want to make sure you have
+<a href="https://www.rust-lang.org/tools/install">Rust</a> installed. Make sure <code>rustc -V</code> prints out at least 1.30.0.</p>
+<p>Finally, if you’re using <code>wasm-pack</code> to publish to NPM, you’ll want
+to <a href="#npm">install and configure <code>npm</code></a>. In the future, we intend to rewrite the
+npm registry client bits so that the need for a Node runtime is eliminated. If
+you’re excited about that work- you should reach out to the maintainers and get
+involved!</p>
+<p>Using a non-rustup setup? Learn how to configure it for wasm-pack <a href="#non-rustup-setups">here</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="npm"><a class="header" href="#npm">npm</a></h1>
+<p>Currently, <code>wasm-pack</code> requires that you have npm installed to pack and publish your
+package. Longterm, this will be replaced by a Rust only version.</p>
+<p>If you would rather use another package manager that interfaces with the npm registry
+you may, however, the <code>pack</code>, <code>publish</code>, and <code>login</code> commands wrap the npm CLI interface
+and as a result require that npm be installed.</p>
+<p>You can install <a href="https://www.npmjs.com">npm</a> by following <a href="https://docs.npmjs.com/downloading-and-installing-node-js-and-npm">these instructions</a>.</p>
+<h3 id="npm-account"><a class="header" href="#npm-account">npm Account</a></h3>
+<p>Part of the <code>wasm-pack</code> workflow is to publish your package to the npm Registry.</p>
+<p>Regardless of which package manager CLI tool you prefer, if you wish to publish
+your package to the npm registry you’ll need an npm account.</p>
+<p>You can find information about signing up for npm <a href="https://www.npmjs.com/signup">here</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="nodejs"><a class="header" href="#nodejs">nodejs</a></h1>
+<p>Currently, <code>wasm-pack</code> generated npm modules require you to have the <a href="https://github.com/node-fetch/node-fetch">fetch</a> polyfill in your node project.</p>
+<p>If there is a module from <code>wasm-pack build --target nodejs</code> you may encounter some errors regarding global <code>Headers</code>, <code>Request</code>, <code>Response</code> and <code>fetch</code> Web APIs.</p>
+<h2 id="common-errors"><a class="header" href="#common-errors">Common errors:</a></h2>
+<pre><code class="language-js">ReqwestError(reqwest::Error { kind: Builder, source: "JsValue(ReferenceError: Headers is not defined
+ReqwestError(reqwest::Error { kind: Builder, source: "JsValue(ReferenceError: Request is not defined
+
+    var ret = getObject(arg0) instanceof Response;
+ReferenceError: Response is not defined
+</code></pre>
+<h2 id="workaround"><a class="header" href="#workaround">Workaround</a></h2>
+<p>Import or declare fetch and objects: Headers, Request, Response</p>
+<pre><code class="language-ts">// CommonJS
+const fetch = require('node-fetch');
+
+// ES Module
+import fetch from 'node-fetch';
+
+// @ts-ignore
+global.fetch = fetch;
+// @ts-ignore
+global.Headers = fetch.Headers;
+// @ts-ignore
+global.Request = fetch.Request;
+// @ts-ignore
+global.Response = fetch.Response;
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="non-rustup-setups"><a class="header" href="#non-rustup-setups">Non-Rustup setups</a></h1>
+<p><code>wasm-pack</code> compiles your code using the <code>wasm32-unknown-unknown</code> target. <code>wasm-pack</code> will automatically add this target for Rustup setups if you don’t already have it installed by doing <code>rustup target add wasm32-unknown-unknown</code>. However, if you’re not using Rustup, then we won’t be able to do this automatically, and you’ll have to do this yourself.</p>
+<h2 id="manually-add-wasm32-unknown-unknown"><a class="header" href="#manually-add-wasm32-unknown-unknown">Manually add wasm32-unknown-unknown</a></h2>
+<p><em>Disclaimer: This is not guaranteed to work for every setup. These instructions below are specific for setups that match the exact rustc release, which means that the downloaded wasm32 target can be incompatible.</em></p>
+<p>To manually add the <code>wasm32-unknown-unknown</code> target you will need to download it from the rust-lang website and put the contents in the correct folder.</p>
+<p>All the targets for all the different <code>rustc</code> versions are not presented in a human way on a website (yet) for you to just select the one you want and download it, one reason for this is that Rustup handles all of this for you and the packaging of targets was mainly built for tools. However, the following steps will walk through how to do this.</p>
+<p>First, check what version of <code>rustc</code> you’re using by running <code>rustc --version</code>. This should display something like: <code>rustc 1.33.0 (2aa4c46cf 2019-02-28)</code>. Then you need to download the correct wasm32 target for your rustc version. The rustc version is part of the url, which means for <code>rustc 1.33.0</code> the url will look like this: <code>https://static.rust-lang.org/dist/rust-std-1.33.0-wasm32-unknown-unknown.tar.gz</code>.</p>
+<p>Here’s some examples of urls for different rustc versions:</p>
+<ul>
+<li>Nightly https://static.rust-lang.org/dist/rust-std-nightly-wasm32-unknown-unknown.tar.gz</li>
+<li>Specific date nightly (2019-03-10) https://static.rust-lang.org/dist/2019-03-10/rust-std-nightly-wasm32-unknown-unknown.tar.gz</li>
+<li>Beta https://static.rust-lang.org/dist/rust-std-beta-wasm32-unknown-unknown.tar.gz</li>
+</ul>
+<p>You should be able to download this either by doing <code>wget https://static.rust-lang.org/dist/rust-std-1.33.0-wasm32-unknown-unknown.tar.gz</code> or by just visiting the url in a web browser.</p>
+<p>After you have downloaded this tarball at a location of your choice, you should unpack it. This should result in a folder named <code>rust-std-1.33.0-wasm32-unknown-unknown</code> that contains some folders and files, but the interesting one is a folder called <code>rust-std-wasm32-unknown-unknown</code> which contains a <code>lib</code> and that should contain a <code>rustlib</code> folder and in that, a folder called <code>wasm32-unknown-unknown</code>. This is the folder we want to move.</p>
+<p>Here’s how the structure should look like for rustc 1.33.0:</p>
+<pre><code>rust-std-1.33.0-wasm32-unknown-unknown
+├── components
+├── install.sh
+├── rust-installer-version
+└── rust-std-wasm32-unknown-unknown
+    ├── lib
+    │   └── rustlib
+    │       └── wasm32-unknown-unknown
+</code></pre>
+<p>To know where we should move this <code>wasm32-unknown-unknown</code> folder we need to run <code>rustc --print sysroot</code> which should print a path that looks something like this (this will vary on different operating systems): <code>/home/user/rust/rust-1.33.0-2019-02-28-2aa4c46cf</code>. That folder should contain a <code>lib</code> folder that contains a <code>rustlib</code> folder. We should move the <code>wasm32-unknown-unknown</code> to this folder.</p>
+<p>On unix-like operating systems we can do that with the following command:
+<code>mv rust-std-1.33.0-wasm32-unknown-unknown/rust-std-wasm32-unknown-unknown/lib/rustlib/wasm32-unknown-unknown /home/user/rust/rust-1.33.0-2019-02-28-2aa4c46cf/lib/rustlib/</code> and that should be it!</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="commands"><a class="header" href="#commands">Commands</a></h1>
+<p><code>wasm-pack</code> has several commands to help you during the process of building
+a Rust-generated WebAssembly project.</p>
+<ul>
+<li><code>new</code>: This command generates a new project for you using a template. <a href="#wasm-pack-new">Learn more</a></li>
+<li><code>build</code>: This command builds a <code>pkg</code> directory for you with compiled wasm and generated JS. <a href="#wasm-pack-build">Learn more</a></li>
+<li><code>pack</code> and <code>publish</code>: These commands will create a tarball, and optionally publish it to a registry, such as npm. <a href="#pack-and-publish">Learn more</a></li>
+</ul>
+<h3 id="deprecated-commands"><a class="header" href="#deprecated-commands">Deprecated Commands</a></h3>
+<ul>
+<li><code>init</code>: This command has been deprecated in favor of <code>build</code>.</li>
+</ul>
+<h3 id="log-levels"><a class="header" href="#log-levels">Log levels</a></h3>
+<p>By default <code>wasm-pack</code> displays a lot of useful information.</p>
+<p>You can cause it to display even <em>more</em> information by using <code>--verbose</code>, or you can silence <em>all</em> stdout by using <code>--quiet</code>.</p>
+<p>You can also use <code>--log-level</code> to have fine-grained control over wasm-pack’s log output:</p>
+<ul>
+<li><code>--log-level info</code> is the default, it causes all messages to be logged.</li>
+<li><code>--log-level warn</code> causes warnings and errors to be displayed, but not info.</li>
+<li><code>--log-level error</code> causes only errors to be displayed.</li>
+</ul>
+<p>These flags are global flags, so they can be used with every command, and they must come <em>before</em> the command:</p>
+<pre><code class="language-sh">wasm-pack --log-level error build
+wasm-pack --quiet build
+wasm-pack --verbose build
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="wasm-pack-new"><a class="header" href="#wasm-pack-new">wasm-pack new</a></h1>
+<p>The <code>wasm-pack new</code> command creates a new RustWasm project for you,
+using <a href="https://github.com/ashleygwilliams/cargo-generate"><code>cargo-generate</code></a> under the hood.</p>
+<p>It takes 3 parameters, name, template, and mode:</p>
+<pre><code>wasm-pack new &lt;name&gt; --template &lt;template&gt; --mode &lt;normal|noinstall|force&gt;
+</code></pre>
+<p>The default template is <a href="https://github.com/wasm-bindgen/wasm-pack"><code>wasm-bindgen/wasm-pack</code></a>,
+which includes the <code>wasm-pack-template</code> cargo-generate template.</p>
+<h2 id="name"><a class="header" href="#name">Name</a></h2>
+<p>The <code>wasm-pack new</code> command must be given a name argument, e.g.:</p>
+<pre><code>wasm-pack new myproject
+</code></pre>
+<h2 id="template"><a class="header" href="#template">Template</a></h2>
+<p>The <code>wasm-pack new</code> command can be given an optional template argument, e.g.:</p>
+<pre><code>wasm-pack new myproject --template https://github.com/wasm-bindgen/wasm-pack
+</code></pre>
+<p>The template can be an address to a git repo that contains a <a href="https://github.com/ashleygwilliams/cargo-generate"><code>cargo-generate</code></a>
+template.</p>
+<h2 id="mode"><a class="header" href="#mode">Mode</a></h2>
+<p>The <code>wasm-pack new</code> command can be given an optional mode argument, e.g.:</p>
+<pre><code>wasm-pack new myproject --mode noinstall
+</code></pre>
+<p>The mode passed can be either “normal”, “noinstall”, or “force”. “normal” is passed by
+default.</p>
+<p><code>noinstall</code> means that wasm-pack should not attempt to install any underlying tools.
+If a necessary tool cannot be found, the command will error.</p>
+<p><code>force</code> means that wasm-pack should not check the local Rust version. If a local Rust
+is an unacceptable Rust version, the command will error.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="wasm-pack-build"><a class="header" href="#wasm-pack-build">wasm-pack build</a></h1>
+<p>The <code>wasm-pack build</code> command creates the files necessary for JavaScript
+interoperability and for publishing a package to npm. This involves compiling
+your code to wasm and generating a pkg folder. This pkg folder will contain the
+wasm binary, a JS wrapper file, your <code>README</code>, and a <code>package.json</code> file.</p>
+<p>The <code>pkg</code> directory is automatically <code>.gitignore</code>d by default, since it contains
+build artifacts which are not intended to be checked into version
+control.<sup><a href="#footnote-0">0</a></sup></p>
+<h2 id="path"><a class="header" href="#path">Path</a></h2>
+<p>The <code>wasm-pack build</code> command can be given an optional path argument, e.g.:</p>
+<pre><code>wasm-pack build examples/js-hello-world
+</code></pre>
+<p>This path should point to a directory that contains a <code>Cargo.toml</code> file. If no
+path is given, the <code>build</code> command will run in the current directory.</p>
+<h2 id="output-directory"><a class="header" href="#output-directory">Output Directory</a></h2>
+<p>By default, <code>wasm-pack</code> will generate a directory for its build output called <code>pkg</code>.
+If you’d like to customize this you can use the <code>--out-dir</code> flag.</p>
+<pre><code>wasm-pack build --out-dir out
+</code></pre>
+<p>The above command will put your build artifacts in a directory called <code>out</code>, instead
+of the default <code>pkg</code>.</p>
+<h2 id="generated-file-names"><a class="header" href="#generated-file-names">Generated file names</a></h2>
+<p>Flag <code>--out-name</code> sets the prefix for output file names. If not provided, package name is used instead.</p>
+<p>Usage examples, assuming our crate is named <code>dom</code>:</p>
+<pre><code>wasm-pack build
+# will produce files
+# dom.d.ts  dom.js  dom_bg.d.ts  dom_bg.wasm  package.json  README.md
+
+wasm-pack build --out-name index
+# will produce files
+# index.d.ts  index.js  index_bg.d.ts  index_bg.wasm  package.json  README.md
+</code></pre>
+<h2 id="profile"><a class="header" href="#profile">Profile</a></h2>
+<p>The <code>build</code> command accepts an optional profile argument: one of <code>--dev</code>,
+<code>--profiling</code>, or <code>--release</code>. If none is supplied, then <code>--release</code> is used.</p>
+<p>This controls whether debug assertions are enabled, debug info is generated, and
+which (if any) optimizations are enabled.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Profile</th><th>Debug Assertions</th><th>Debug Info</th><th>Optimizations</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--dev</code></td><td>Yes</td><td>Yes</td><td>No</td><td>Useful for development and debugging.</td></tr>
+<tr><td><code>--profiling</code></td><td>No</td><td>Yes</td><td>Yes</td><td>Useful when profiling and investigating performance issues.</td></tr>
+<tr><td><code>--release</code></td><td>No</td><td>No</td><td>Yes</td><td>Useful for shipping to production.</td></tr>
+</tbody>
+</table>
+</div>
+<p>The <code>--dev</code> profile will build the output package using cargo’s <a href="https://doc.rust-lang.org/cargo/reference/manifest.html#the-profile-sections">default
+non-release profile</a>. Building this way is
+faster but applies few optimizations to the output, and enables debug assertions
+and other runtime correctness checks. The <code>--profiling</code> and <code>--release</code> profiles
+use cargo’s release profile, but the former enables debug info as well, which
+helps when investigating performance issues in a profiler.</p>
+<p>The exact meaning of the profile flags may evolve as the platform matures.</p>
+<h2 id="target"><a class="header" href="#target">Target</a></h2>
+<p>The <code>build</code> command accepts a <code>--target</code> argument. This will customize the JS
+that is emitted and how the WebAssembly files are instantiated and loaded. For
+more documentation on the various strategies here, see the <a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html">documentation on
+using the compiled output</a>.</p>
+<pre><code>wasm-pack build --target nodejs
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Usage</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><em>not specified</em> or <code>bundler</code></td><td><a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html#bundlers">Bundler</a></td><td>Outputs JS that is suitable for interoperation with a Bundler like Webpack. You’ll <code>import</code> the JS and the <code>module</code> key is specified in <code>package.json</code>. <code>sideEffects: false</code> is by default.</td></tr>
+<tr><td><code>nodejs</code></td><td><a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html#nodejs">Node.js</a></td><td>Outputs JS that uses CommonJS modules, for use with a <code>require</code> statement. <code>main</code> key in <code>package.json</code>.</td></tr>
+<tr><td><code>web</code></td><td><a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html#without-a-bundler">Native in browser</a></td><td>Outputs JS that can be natively imported as an ES module in a browser, but the WebAssembly must be manually instantiated and loaded.</td></tr>
+<tr><td><code>no-modules</code></td><td><a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html#without-a-bundler">Native in browser</a></td><td>Same as <code>web</code>, except the JS is included on a page and modifies global state, and doesn’t support as many <code>wasm-bindgen</code> features as <code>web</code></td></tr>
+<tr><td><code>deno</code></td><td><a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html#deno">Deno</a></td><td>Outputs JS that can be natively imported as an ES module in deno.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="scope"><a class="header" href="#scope">Scope</a></h2>
+<p>The <code>build</code> command also accepts an optional <code>--scope</code> argument. This will scope
+your package name, which is useful if your package name might conflict with
+something in the public registry. For example:</p>
+<pre><code>wasm-pack build examples/js-hello-world --scope test
+</code></pre>
+<p>This command would create a <code>package.json</code> file for a package called
+<code>@test/js-hello-world</code>. For more information about scoping, you can refer to
+the npm documentation <a href="https://docs.npmjs.com/misc/scope">here</a>.</p>
+<h2 id="mode-1"><a class="header" href="#mode-1">Mode</a></h2>
+<p>The <code>build</code> command accepts an optional <code>--mode</code> argument.</p>
+<pre><code>wasm-pack build examples/js-hello-world --mode no-install
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Option</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>no-install</code></td><td><code>wasm-pack build</code> implicitly and create wasm binding without installing <code>wasm-bindgen</code>.</td></tr>
+<tr><td><code>normal</code></td><td>do all the stuffs of <code>no-install</code> with installed <code>wasm-bindgen</code>.</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="extra-options"><a class="header" href="#extra-options">Extra options</a></h2>
+<p>The <code>build</code> command can pass extra options straight to <code>cargo build</code> even if
+they are not supported in wasm-pack. To use them simply add the extra arguments
+at the very end of your command, just as you would for <code>cargo build</code>. For
+example, to build the previous example using cargo’s offline feature:</p>
+<pre><code>wasm-pack build examples/js-hello-world --mode no-install -- --offline
+</code></pre>
+<h2 id="panic-strategy"><a class="header" href="#panic-strategy">Panic strategy</a></h2>
+<p>By default, Rust panics in WebAssembly compile with <code>panic=abort</code>, which aborts
+the WebAssembly instance on panic. The <code>--panic-unwind</code> flag changes this so
+panics can be caught at FFI boundaries and converted to JavaScript exceptions
+by tools like <a href="https://wasm-bindgen.github.io/wasm-bindgen/reference/catch-unwind.html"><code>wasm-bindgen</code>’s catch-unwind support</a>.</p>
+<pre><code>wasm-pack build --panic-unwind
+</code></pre>
+<p>This flag:</p>
+<ul>
+<li>Invokes <code>cargo</code> with the <strong>nightly</strong> toolchain (<code>cargo +nightly build</code>).</li>
+<li>Adds <code>-Z build-std=std,panic_unwind</code> to rebuild <code>std</code> with unwinding
+support.</li>
+<li>Sets <code>RUSTFLAGS=-Cpanic=unwind</code> (preserving any user-provided <code>RUSTFLAGS</code>).</li>
+</ul>
+<p>The first time you use <code>--panic-unwind</code>, <code>wasm-pack</code> will install any missing
+prerequisites via <code>rustup</code>:</p>
+<ul>
+<li>The nightly toolchain</li>
+<li>The <code>rust-src</code> component for nightly</li>
+<li>The <code>wasm32-unknown-unknown</code> target for nightly</li>
+</ul>
+<p>If you are not using <code>rustup</code> you must install these prerequisites manually.
+See <a href="#non-rustup-setups">Non-<code>rustup</code> setups</a>.</p>
+<blockquote>
+<p><strong>Note:</strong> <code>wasm-pack</code> only handles producing the <code>.wasm</code>. The actual
+“panic = recoverable JavaScript exception” behaviour requires runtime glue
+from your bindings layer (e.g. <code>wasm-bindgen</code>’s catch-unwind feature). With
+just <code>--panic-unwind</code> and no runtime glue, panics still terminate the
+instance — they are merely <em>unwound</em> rather than <em>aborted</em>.</p>
+</blockquote>
+<p><code>--panic-unwind</code> is also available for <a href="#wasm-pack-test"><code>wasm-pack test</code></a>.</p>
+<hr style="font-size: 1.5em; margin-top: 2.5em" />
+<p><sup id="footnote-0">0</sup> If you need to include additional assets in the pkg
+directory and your NPM package, we intend to have a solution for your use case
+soon. <a href="#wasm-pack-build">↩</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="wasm-pack-test"><a class="header" href="#wasm-pack-test">wasm-pack test</a></h1>
+<p>The <code>wasm-pack test</code> command wraps the <a href="https://wasm-bindgen.github.io/wasm-bindgen/wasm-bindgen-test">wasm-bindgen-test-runner</a>
+CLI allowing you to run wasm tests in different browsers without needing to install the different
+webdrivers yourself.</p>
+<pre><code>wasm-pack test --help
+</code></pre>
+<h2 id="path-1"><a class="header" href="#path-1">Path</a></h2>
+<p>The <code>wasm-pack test</code> command can be given an optional path argument.</p>
+<p>This path should point to a directory that contains a <code>Cargo.toml</code> file. If no
+path is given, the <code>test</code> command will run in the current directory.</p>
+<pre><code># Run tests for the current directory's crate
+wasm-pack test
+
+# Run tests for a specified crate
+wasm-pack test crates/crate-in-my-workspace
+</code></pre>
+<h2 id="profile-1"><a class="header" href="#profile-1">Profile</a></h2>
+<p>The <code>test</code> command accepts an optional profile argument: <code>--release</code>.</p>
+<p>If none is supplied, then a debug test build will be used.</p>
+<h2 id="test-environment"><a class="header" href="#test-environment">Test environment</a></h2>
+<p>Choose where to run your tests by passing in any combination of testing environment flags.</p>
+<p><code>--headless</code> is useful for running browser tests in a headless browser as part of a CI process.</p>
+<pre><code>wasm-pack test --node --firefox --chrome --safari --headless
+</code></pre>
+<h2 id="panic-strategy-1"><a class="header" href="#panic-strategy-1">Panic strategy</a></h2>
+<p>The <code>test</code> command accepts the <code>--panic-unwind</code> flag, which builds the test
+binary with <code>panic=unwind</code> via the nightly toolchain and <code>-Z build-std</code>. See
+the <a href="#panic-strategy"><code>build</code> command’s documentation</a> for details.</p>
+<pre><code>wasm-pack test --node --panic-unwind
+</code></pre>
+<h2 id="extra-options-1"><a class="header" href="#extra-options-1">Extra options</a></h2>
+<p>The <code>test</code> command can pass extra options straight to <code>cargo test</code> even if they are not
+supported in wasm-pack.</p>
+<p>To use them simply add the extra arguments at the very end of your command, just
+as you would for <code>cargo test</code>.</p>
+<p><code>cargo test -h</code> for a list of all options that you can pass through.</p>
+<h2 id="running-only-some-tests"><a class="header" href="#running-only-some-tests">Running only some tests</a></h2>
+<p>When debugging a specific issue, you may find yourself wanting to run a subset of tests, instead of your entire suite of tests.</p>
+<p>Here are a few examples of how to run a subset of your tests:</p>
+<pre><code># Example directory structure
+$ tree crates/foo
+├── Cargo.toml
+├── README.md
+├── src
+│   ├── diff
+│   │   ├── diff_test_case.rs
+│   │   └── mod.rs
+│   ├── lib.rs
+└── tests
+    ├── diff_patch.rs
+    └── node.rs
+</code></pre>
+<pre><code># Run all tests in tests/diff_patch.rs in Firefox
+wasm-pack test crates/foo --firefox --headless --test diff_patch
+
+# Run all tests in tests/diff_patch.rs that contain the word "replace"
+wasm-pack test crates/foo --firefox --headless --test diff_patch replace
+
+# Run all tests inside of a `tests` module inside of src/lib/diff.rs
+wasm-pack test crates/foo --firefox --headless --lib diff::tests
+
+# Same as the above, but only if they contain the word replace
+wasm-pack test crates/foo --firefox --headless --lib diff::tests::replace
+</code></pre>
+<p>Note that you can also filter tests by location in which they’re supposed to
+run. For example:</p>
+<pre><code># Run all tests which are intended to execute in Node.js
+wasm-pack test --node
+
+# Run all tests which are intended to be executed in a browser
+wasm-pack test --firefox --headless
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="pack-and-publish"><a class="header" href="#pack-and-publish">pack and publish</a></h1>
+<p>The <code>publish</code> and <code>pack</code> commands interact with the pkg directory that’s
+created when you run <code>wasm-pack build</code>. The <code>pack</code> command creates a tarball
+from the pkg directory and the <code>publish</code> command creates a tarball from the
+pkg directory <strong>and</strong> publishes it to the NPM registry.</p>
+<p>Underneath, these commands use <code>npm pack</code> and <code>npm publish</code>. You can read
+more about these in the NPM documentation:</p>
+<ul>
+<li><a href="https://docs.npmjs.com/cli/pack"><code>npm pack</code></a></li>
+<li><a href="https://docs.npmjs.com/cli/publish"><code>npm publish</code></a></li>
+</ul>
+<p>Both these commands take the path to the pkg directory as the first argument.
+You can either set the argument directly to the pkg directory or to the parent
+of the pkg directory:</p>
+<pre><code>$ wasm-pack pack myproject/pkg
+| 🎒  packed up your package!
+$ wasm-pack pack myproject
+| 🎒  packed up your package!
+</code></pre>
+<p>If you try to call <code>pack</code> or <code>publish</code> on another directory, you get an error:</p>
+<pre><code>$ wasm-pack pack myproject/src/
+Unable to find the pkg directory at path 'myproject/src/', or in a child directory of 'myproject/src/'
+</code></pre>
+<p>If you don’t set a path, they use the current directory as the path.</p>
+<h2 id="publishing-tagged-releases"><a class="header" href="#publishing-tagged-releases">Publishing tagged releases</a></h2>
+<p>You can also publish tagged releases with the optional <code>--tag</code> argument, e.g.</p>
+<pre><code>wasm-pack publish --tag next
+</code></pre>
+<p>By default, the <code>latest</code> tag is used to identify the current version of a package,
+and npm install &lt;pkg&gt; (without any @&lt;version&gt; or @&lt;tag&gt; specifier) installs the latest tag.</p>
+<p>You can read more about <a href="https://docs.npmjs.com/cli/dist-tag">distribution tags</a> on NPM.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="wasm-pack-init-deprecated"><a class="header" href="#wasm-pack-init-deprecated">wasm-pack init (DEPRECATED)</a></h1>
+<p>This command has been deprecated in favor of <code>build</code>, which does the same thing, but is
+a much more representative name for the command. <a href="#wasm-pack-build">Read the docs for <code>build</code>.</a></p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="tutorials"><a class="header" href="#tutorials">Tutorials</a></h1>
+<p>We have two tutorials that help you get started with <code>wasm-pack</code>:</p>
+<ul>
+<li>If you want to create and publish a package: <a href="#npm-browser-package-tutorial">npm browser packages</a></li>
+<li>If you’d like to develop a Wasm library alongside a JavaScript application using Webpack: <a href="#hybrid-applications-with-webpack">Hybrid applications with Webpack</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="hybrid-applications-with-webpack"><a class="header" href="#hybrid-applications-with-webpack">Hybrid Applications with Webpack</a></h1>
+<p>The goal of this tutorial is to introduce you to the <a href="https://github.com/drager/rust-webpack-template"><code>rust-webpack-template</code></a>
+and the <code>wasm-pack</code> workflow by building the example app in the template.</p>
+<p>This tutorial is aimed at folks who are both beginners to WebAssembly and Rust- you don’t need
+much Rust knowledge to complete this tutorial.</p>
+<p>Be sure to have read and followed the <a href="#prerequisites">Prerequisites</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>You can create a new Rust-WebAssembly webpack project by using the <a href="https://github.com/drager/rust-webpack-template">rustwasm webpack-template</a>.</p>
+<p>Run:</p>
+<pre><code>npm init rust-webpack my-app
+</code></pre>
+<p>The last argument will be your project name. After you run the command, you will have a
+directory with a new project, ready to go. We’ll talk about what’s been included in this
+template further in this guide.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="run-the-code"><a class="header" href="#run-the-code">Run The Code</a></h1>
+<p>The Rust Webpack template is designed for creating monorepo-style Web applications with
+Rust-generated WebAssembly and Webpack without publishing your wasm to NPM.
+This portion of the tutorial will explain how to build a <a href="https://webpack.js.org/">Webpack</a> JavaScript project
+that will run your WebAssembly code in the browser.</p>
+<h2 id="scaffold-a-javascript-project"><a class="header" href="#scaffold-a-javascript-project">Scaffold a JavaScript Project</a></h2>
+<p>To generate a new Rust Webpack project, we’ve used the <a href="https://github.com/drager/rust-webpack-template"><code>rust-webpack</code></a> npm template.</p>
+<pre><code>npm init rust-webpack your-package-name
+</code></pre>
+<p>A new project folder will be created with the name you supply.</p>
+<p>If we look in the project, we’ll see the following:</p>
+<ul>
+<li><code>.gitignore</code>: ignores <code>node_modules</code></li>
+<li><code>LICENSE-APACHE</code> and <code>LICENSE-MIT</code>: most Rust projects are licensed this way, so these are included for you</li>
+<li><code>README.md</code>: the file you are reading now!</li>
+<li><code>index.html</code>: a bare bones html document that includes the webpack bundle</li>
+<li><code>js/index.js</code>: example JS file with a comment showing how to import and use a wasm pkg</li>
+<li><code>package.json</code> and <code>package-lock.json</code>:
+<ul>
+<li>pulls in devDependencies for using webpack:
+<ul>
+<li><a href="https://www.npmjs.com/package/webpack"><code>webpack</code></a></li>
+<li><a href="https://www.npmjs.com/package/webpack-cli"><code>webpack-cli</code></a></li>
+<li><a href="https://www.npmjs.com/package/webpack-dev-server"><code>webpack-dev-server</code></a></li>
+</ul>
+</li>
+<li>defines a <code>start</code> script to run <code>webpack-dev-server</code></li>
+</ul>
+</li>
+<li><code>webpack.config.js</code>: configuration file for bundling your JS with webpack</li>
+<li><code>crate/src/lib.rs</code>: your Rust crate code!</li>
+</ul>
+<h2 id="your-rust-crate"><a class="header" href="#your-rust-crate">Your Rust Crate</a></h2>
+<p>The scaffolded project includes an example Rust WebAssembly webpack crate.</p>
+<p>Inside the <code>crate/src/lib.rs</code> file we see a <code>run</code> function that’s callable from our JS file:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Called by our JS entry point to run the example.
+#[wasm_bindgen]
+pub fn run() -&gt; Result&lt;(), JsValue&gt; {
+    set_panic_hook();
+
+    // ...
+    let p: web_sys::Node = document.create_element("p")?.into();
+    p.set_text_content(Some("Hello from Rust, WebAssembly, and Webpack!"));
+    // ...
+
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<p>Now, open up the <code>js/index.js</code> file. We see our Rust-generated wasm <code>run</code> function being
+called inside our JS file.</p>
+<pre><code class="language-js">import("../crate/pkg").then(module =&gt; {
+  module.run();
+});
+</code></pre>
+<h2 id="run-the-project"><a class="header" href="#run-the-project">Run The Project</a></h2>
+<p>To generate our Rust-compiled to wasm code, in the root directory we run:</p>
+<pre><code class="language-bash">npm run build
+</code></pre>
+<p>This will create our bundled JavaScript module in a new directory <code>dist</code>.</p>
+<p>We should be ready to run our project now!
+In the root directory, we’ll run:</p>
+<pre><code class="language-bash">npm start
+</code></pre>
+<p>Then in a web browser navigate to <code>http://localhost:8080</code> and you should be greeted
+with text in the body of the page that says “Hello from Rust, WebAssembly, and Webpack!”</p>
+<p>If you did congrats! You’ve successfully used the rust-webpack template!</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="npm-browser-package-tutorial"><a class="header" href="#npm-browser-package-tutorial">npm Browser Package Tutorial</a></h1>
+<p>The goal of this tutorial is to introduce you to the <code>wasm-pack</code> workflow by building a small npm
+package designed to be used in a browser application.</p>
+<p>This tutorial is aimed at folks who are both beginners to WebAssembly and Rust- you don’t need
+much Rust knowledge to complete this tutorial.</p>
+<p>Be sure to have done the following before starting:</p>
+<ol>
+<li><a href="https://wasm-bindgen.github.io/wasm-pack/installer/">Install <code>wasm-pack</code></a></li>
+<li>Read and install the <a href="#prerequisites">Prerequisites</a>.</li>
+</ol>
+<p>⚠️ We strongly recommend that you install <a href="https://nodejs.org">Node.js</a> using a version manager. You can learn more <a href="https://npmjs.com/get-npm">here</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="getting-started-1"><a class="header" href="#getting-started-1">Getting Started</a></h1>
+<p>You can create a new Rust-WebAssembly project by using the <a href="https://github.com/rustwasm/wasm-pack/tree/master/wasm-pack-template">wasm-pack template</a>.</p>
+<p>To so do, you’ll need the <code>cargo-generate</code> tool. To install <code>cargo-generate</code>:</p>
+<pre><code>cargo install cargo-generate
+</code></pre>
+<p>Then run:</p>
+<pre><code>cargo generate wasm-bindgen/wasm-pack
+</code></pre>
+<p>You will be prompted to give your project a name. Once you do, you will have a directory
+with a new project, ready to go. We’ll talk about what’s been included in this template
+further in this guide.</p>
+<h2 id="manual-setup"><a class="header" href="#manual-setup">Manual Setup</a></h2>
+<p>⚠️ If you’d rather not use a template, or are having trouble with the template, you can
+do a manual setup by following <a href="#manual-setup-1">these instructions</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="manual-setup-1"><a class="header" href="#manual-setup-1">Manual Setup</a></h1>
+<p>⚠️ This is not the recommended way to start a <code>wasm-pack</code> project! If you ended up
+here by mistake, go check out our <a href="#getting-started-1">recommended project start</a>.</p>
+<h3 id="step-1-create-a-new-rust-library-project"><a class="header" href="#step-1-create-a-new-rust-library-project">Step 1: Create a New Rust Library Project</a></h3>
+<p>You can create a new Rust project named <code>my-lib</code> using this command.</p>
+<pre><code>cargo new --lib my-lib
+</code></pre>
+<p>The <code>--lib</code> flag specifies that the project is a library, which is important
+because we will be calling this code from JavaScript.</p>
+<h3 id="step-2-edit-your-cargotoml-file"><a class="header" href="#step-2-edit-your-cargotoml-file">Step 2: Edit your <code>Cargo.toml</code> File</a></h3>
+<h4 id="add-the-wasm-bindgen-dependency"><a class="header" href="#add-the-wasm-bindgen-dependency">Add the <code>wasm-bindgen</code> dependency</a></h4>
+<p>You will need to add <code>wasm-bindgen</code> to your <code>Cargo.toml</code> in the dependencies
+section. <code>wasm-bindgen</code> is a tool that facilitates interoperability between
+wasm modules and JavaScript.</p>
+<p>⚠️ If you are coming from JavaScript, you might note that when we add the dependency
+there is no <code>^</code> or <code>~</code> symbol- it looks like we’re locking to the <code>0.2</code> version.
+However, that’s not the case! In Rust, the <code>^</code> is implied.</p>
+<h4 id="add-crate-type"><a class="header" href="#add-crate-type">Add <code>crate-type</code></a></h4>
+<p>Next, add a <code>[lib]</code> section, with a new field named <code>crate-type</code> set to
+<code>"cdylib"</code>. This specifies that the library is a C compatible dynamic library,
+which helps <code>cargo</code> pass the correct flags to the Rust compiler when targeting
+<code>wasm32</code>.</p>
+<p>After making these changes, your <code>Cargo.toml</code> file should look something like
+this:</p>
+<pre><code class="language-toml">[package]
+name = "hello-wasm"
+version = "0.1.0"
+authors = ["Ashley Williams &lt;ashley666ashley@gmail.com&gt;"]
+description = "babby's first wasm package"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ashleygwilliams/hello-wasm"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen="0.2"
+</code></pre>
+<h3 id="step-3-write-some-rust"><a class="header" href="#step-3-write-some-rust">Step 3: Write some Rust!</a></h3>
+<p>Now that your crate is correctly configured in your <code>Cargo.toml</code> file, the only step
+left to setup your project is to have some Rust code in your <code>src/lib.rs</code> file.</p>
+<h4 id="browser-example"><a class="header" href="#browser-example">Browser Example</a></h4>
+<p>The template we have gives you a quick “Hello, World” project to use for compiling into
+a WebAssembly library that you can use in the browser:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>extern crate wasm_bindgen;
+
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+extern {
+    fn alert(s: &amp;str);
+}
+
+#[wasm_bindgen]
+pub fn greet() {
+    alert("Hello, World!");
+}
+<span class="boring">}</span></code></pre>
+<p>And that’s it! We’ll talk about what this code does in the <a href="#template-deep-dive">template deep dive</a>, which you are all
+setup for now. Happy <code>wasm-pack</code>ing!</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="template-deep-dive"><a class="header" href="#template-deep-dive">Template Deep Dive</a></h1>
+<p>⚠️ This section is a deep dive into the contents of the files of a “Hello, World” project,
+specifically written for people who are not that familiar with Rust. If you’d rather just
+checkout the workflow, feel free to skip this section!</p>
+<p>⚠️ If you haven’t used a template to set up your project, the contents of your files
+may look slightly different than what is described here.</p>
+<h3 id="what-the-template-gave-us"><a class="header" href="#what-the-template-gave-us">What the Template Gave Us</a></h3>
+<p>Let’s start by taking a look at what the template generated for us.</p>
+<ul>
+<li><a href="#cargotoml"><code>Cargo.toml</code> - the Cargo manifest</a></li>
+<li><a href="#srclibrs"><code>src/lib.rs</code> - main library module</a></li>
+<li><a href="#srcutilsrs"><code>src/utils.rs</code> - a utility module</a></li>
+<li><a href="#wee_alloc"><code>wee_alloc</code> - a tiny memory allocator</a></li>
+<li><a href="#testswebrs"><code>tests/web.rs</code> - running headless browser tests</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="cargotoml"><a class="header" href="#cargotoml">Cargo.toml</a></h1>
+<p><code>Cargo.toml</code> is the manifest file for Rust’s package manager, <a href="https://doc.rust-lang.org/cargo/"><code>cargo</code></a>. This file contains
+metadata such as name, version, and dependencies for packages, which are call “crates” in Rust.</p>
+<p>There’s a bunch of metadata that the template gives us, but there are three key parts to discuss:</p>
+<ol>
+<li><a href="#a1-crate-type"><code>crate-type</code></a></li>
+<li><a href="#a2-wasm-bindgen-dependency"><code>wasm-bindgen</code> dependency</a></li>
+<li><a href="#a3-features-and-wee_alloc-console_error_panic_hook-dependencies"><code>[features]</code> and <code>wee_alloc</code>, <code>console_error_panic_hook</code> dependencies</a></li>
+</ol>
+<hr />
+<h2 id="1-crate-type"><a class="header" href="#1-crate-type">1. <code>crate-type</code></a></h2>
+<pre><code class="language-toml">[lib]
+crate-type = ["cdylib", "rlib"]
+</code></pre>
+<p>A Rust-<code>wasm</code> crate is a bit different from a normal crate, and as a result, we need to note
+this in our <code>Cargo.toml</code>.</p>
+<p>This <code>[lib]</code> annotation is typically not needed in Cargo projects, and if you’re
+familiar with other Rust crates you’ll remember that the most common crate types
+are <code>rlib</code> (the default) or <code>bin</code> for binaries (which don’t need a <code>crate-type</code>
+annotation).</p>
+<p>Here though <code>crate-type = ["cdylib"]</code> typically signifies that you’d like the
+compiler to create a dynamic system library, but for WebAssembly target it
+simply means “create a <code>*.wasm</code> file without a <code>start</code> function”. On other
+platforms this output type will create <code>*.so</code> file on Linux, <code>*.dylib</code> on
+macOS, and <code>*.dll</code> Windows.</p>
+<p>We also specify <code>crate-type = ["rlib"]</code> to ensure that our library can be unit
+tested with <code>wasm-pack test</code> (which we’ll see later). Without this we wouldn’t
+be able to test our library because the <code>cdylib</code> crate type is incompatible with
+<code>wasm-pack</code>’s style of unit tests.</p>
+<p>You can read more about linking and crate types, <a href="https://doc.rust-lang.org/reference/linkage.html">here</a>.</p>
+<h2 id="2-wasm-bindgen-dependency"><a class="header" href="#2-wasm-bindgen-dependency">2. <code>wasm-bindgen</code> dependency</a></h2>
+<p><a href="https://rustwasm.github.io/docs/wasm-bindgen/"><code>wasm-bindgen</code></a> is our most important dependency. This package allows us to use the
+<code>#[wasm-bindgen]</code> attribute to tag code that represents the interface we want between
+our JavaScript and Rust-generated <code>wasm</code>. We can import JS and export Rust by using this
+attribute.</p>
+<pre><code class="language-toml">wasm-bindgen = "0.2"
+</code></pre>
+<p>We’ll see more about how to use this library when we discuss what has been generated in <code>lib.rs</code>.</p>
+<p>⚠️ If you are coming from JavaScript, you might note that when we add the dependency
+there is no <code>^</code> or <code>~</code> symbol- it looks like we’re locking to the <code>0.2</code> version.
+However, that’s not the case! In Rust, the <code>^</code> is implied. You can read more about this in the
+<a href="https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html">cargo documentation on specifying dependencies</a>.</p>
+<h2 id="3-features-and-wee_alloc-console_error_panic_hook-dependencies"><a class="header" href="#3-features-and-wee_alloc-console_error_panic_hook-dependencies">3. <code>[features]</code> and <a href="https://crates.io/crates/wee_alloc"><code>wee_alloc</code></a>, <a href="https://crates.io/crates/console_error_panic_hook"><code>console_error_panic_hook</code></a> dependencies</a></h2>
+<p>As part of our effort to design a template that helps people discover useful crates
+for their particular use case, this template includes two dependencies that can be
+very useful for folks developing Rust-<code>wasm</code> crates:<a href="https://crates.io/crates/console_error_panic_hook"> <code>console_error_panic_hook</code></a> and
+<a href="https://crates.io/crates/wee_alloc"><code>wee_alloc</code></a>.</p>
+<p>Because these dependencies are useful primarily in a specific portion of the Rust-<code>wasm</code>
+crate development workflow, we’ve also set up a bit of glue code that allows us to include
+them both as dependencies, but also allows them to be optionally included.</p>
+<pre><code class="language-toml">[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.1", optional = true }
+
+# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
+# compared to the default allocator's ~10K. It is slower than the default
+# allocator, however.
+#
+# Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
+wee_alloc = { version = "0.4.2", optional = true }
+</code></pre>
+<p>In our code, we’ll mark certain parts of code as running only if certain <code>[features]</code>
+are enabled, specifically, <code>console_error_panic_hook</code> and <code>wee_alloc</code>. By default,
+only <code>console_error_panic_hook</code> is enabled. To disable or enable either feature, by
+default, we can edit the <code>default</code> vector under <code>[features]</code>.</p>
+<p>To learn more about these features, we discuss them in-depth in the <a href="#srclibrs"><code>src/lib.rs</code></a> and
+<a href="#srcutilsrs"><code>src/utils.rs</code></a> sections.</p>
+<p>Briefly, they include:</p>
+<ul>
+<li><strong>console_error_panic_hook</strong> for logging panic messages to the developer console.</li>
+<li><strong>wee_alloc</strong>, an allocator optimized for small code size.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="srclibrs"><a class="header" href="#srclibrs">src/lib.rs</a></h1>
+<p><code>lib.rs</code> is the template’s main source file. The name <code>lib.rs</code> commonly implies that this Rust project will be compiled as a library.</p>
+<p>It contains three key parts:</p>
+<ol>
+<li><a href="#a1-wasm_bindgen-functions"><code>#[wasm_bindgen] functions</code></a></li>
+<li><a href="#a2-crate-imports">Crate imports</a></li>
+<li><a href="#a3-wee_alloc-optional-dependecy"><code>wee_alloc</code> optional dependecy</a>
+<ul>
+<li><a href="#what-is-wee_alloc">What is <code>wee_alloc</code>?</a></li>
+</ul>
+</li>
+</ol>
+<hr>
+<p>We’ll start with the most important part of <code>lib.rs</code> – the two <code>#[wasm_bindgen]</code> functions (which you can find at the bottom of the file). In many cases, this is the only part of <code>lib.rs</code> you will need to modify.</p>
+<h2 id="1-using-wasm_bindgen"><a class="header" href="#1-using-wasm_bindgen">1. Using <code>wasm_bindgen</code></a></h2>
+<p>To expose functionality from the <code>wasm-bindgen</code> crate more conveniently we can use the <code>use</code> keyword.
+<code>use</code> allows us to conveniently refer to parts of a crate or module. You can learn more about how Rust
+lets you write modular code in <a href="https://doc.rust-lang.org/book/ch07-02-modules-and-use-to-control-scope-and-privacy.html">this chapter of the book</a>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use wasm_bindgen::prelude::*;
+<span class="boring">}</span></code></pre>
+<p>Many crates contain a prelude, a list of things that are convenient to import
+all at once. This allows common features of the module to be conveniently
+accessed without a lengthy prefix. For example, in this file we can use
+<code>#[wasm_bindgen]</code> only because it is brought into scope by the prelude.</p>
+<p>The asterisk at the end of this <code>use</code> indicates that everything inside the module <code>wasm_bindgen::prelude</code> (i.e. the module <code>prelude</code> inside the crate <code>wasm_bindgen</code>) can be referred to without prefixing it with <code>wasm_bindgen::prelude</code>.</p>
+<p>For example, <code>#[wasm_bindgen]</code> could also be written as <code>#[wasm_bindgen::prelude::wasm_bindgen]</code>, although this is not recommended.</p>
+<h2 id="1-wasm_bindgen-functions"><a class="header" href="#1-wasm_bindgen-functions">1. <code>#[wasm_bindgen]</code> functions</a></h2>
+<p>The <code>#[wasm_bindgen]</code> attribute indicates that the function below it will be accessible both in JavaScript and Rust.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+extern {
+    fn alert(s: &amp;str);
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>extern</code> block imports the external JavaScript function <code>alert</code> into Rust. This declaration is required to call <code>alert</code> from Rust. By declaring it in this way, <code>wasm-bindgen</code> will create JavaScript stubs for <code>alert</code> which allow us to pass strings back and forth between Rust and JavaScript.</p>
+<p>We can see that the <code>alert</code> function requires a single parameter <code>s</code> of type <code>&amp;str</code>, a string. In Rust, any string literal such as <code>"Hello, test-wasm!"</code> is of type <code>&amp;str</code>. So, <code>alert</code> could be called by writing <code>alert("Hello, test-wasm!");</code>.</p>
+<p>We knew to declare <code>alert</code> in this way because it is how we would call <code>alert</code> in JavaScript – by passing it a string argument.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen]
+pub fn greet() {
+    alert("Hello, test-wasm!");
+}
+<span class="boring">}</span></code></pre>
+<p>If we were to write the <code>greet</code> function without the <code>#[wasm_bindgen]</code> attribute, then <code>greet</code> would not be easily accessible within JavaScript. Furthermore, we wouldn’t be able to natively convert certain types such as <code>&amp;str</code> between JavaScript and Rust. So, both the <code>#[wasm_bindgen]</code> attribute and the prior import of <code>alert</code> allow <code>greet</code> to be called from JavaScript.</p>
+<p>This is all you need to know to interface with JavaScript, at least to start! You can learn a bunch more by reading the
+<a href="https://rustwasm.github.io/docs/wasm-bindgen/"><code>wasm-bindgen</code> documentation</a>!</p>
+<p>If you are curious about the rest, read on.</p>
+<h2 id="2-crate-organization"><a class="header" href="#2-crate-organization">2. Crate Organization</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod utils;
+<span class="boring">}</span></code></pre>
+<p>This statement declares a new module named <code>utils</code> that is defined by the contents of <code>utils.rs</code>. Equivalently, we could place the contents of <code>utils.rs</code> inside the <code>utils</code> declaration, replacing the line with:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>mod utils {
+    // contents of utils.rs
+}
+<span class="boring">}</span></code></pre>
+<p>Either way, the contents of <code>utils.rs</code> define a single public function <code>set_panic_hook</code>. Because we are placing it inside the <code>utils</code> module, we will be able to call the function directly by writing <code>utils::set_panic_hook()</code>. We will discuss how and why to use this function in <code>src/utils.rs</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>    // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
+    // allocator.
+    if #[cfg(feature = "wee_alloc")] {
+        #[global_allocator]	static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+<span class="boring">}</span></code></pre>
+<p>At compile time this will test if the <code>wee_alloc</code> feature is enabled for this
+compilation. If it’s enabled we’ll configure a global allocator (according to
+<a href="https://docs.rs/wee_alloc/0.4.3/wee_alloc/"><code>wee_alloc</code>’s docs</a>), otherwise it’ll compile to nothing.</p>
+<p>As we saw earlier, the <code>default</code> vector in <code>[features]</code> only contains <code>"console_error_panic_hook"</code> and not <code>"wee_alloc"</code>. So, in this case, this
+block will be replaced by no code at all, and hence the default memory allocator will be used instead of <code>wee_alloc</code>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="srcutilsrs"><a class="header" href="#srcutilsrs">src/utils.rs</a></h1>
+<p>The purpose of <code>utils.rs</code> is to define the <code>utils</code> module, which contains a single function <code>set_panic_hook</code>. This function becomes part of the <code>utils</code> module in <code>lib.rs</code>, as described in the preceding section.</p>
+<p>If the <code>console_error_panic_hook</code> feature is not enabled, then <code>set_panic_hook</code> is defined to be an inlined empty function. So, there is no run-time performance or code-size penalty incurred by its use.</p>
+<p>We will discuss:</p>
+<ol>
+<li><a href="#1-defining-set_panic_hook">Defining <code>set_panic_hook</code></a></li>
+<li><a href="#2-what-is-console_error_panic_hook">What is <code>console_error_panic_hook</code>?</a></li>
+</ol>
+<hr>
+<h2 id="1-defining-set_panic_hook"><a class="header" href="#1-defining-set_panic_hook">1. Defining <code>set_panic_hook</code></a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn set_panic_hook() {
+    // When the `console_error_panic_hook` feature is enabled, we can call the
+    // `set_panic_hook` function at least once during initialization, and then
+    // we will get better error messages if our code ever panics.
+    //
+    // For more details see
+    // https://github.com/rustwasm/console_error_panic_hook#readme
+    #[cfg(feature = "console_error_panic_hook")]
+    console_error_panic_hook::set_once();
+}
+<span class="boring">}</span></code></pre>
+<p>Here, we define a function that’s preceded by a <code>cfg</code> attribute. This attribue,
+<code>#[cfg(feature = "console_error_panic_hook")]</code>, tells Rust to check if the
+<code>console_error_panic_hook</code> feature is set at compile time. If it is, it will call
+this function. If it isn’t- it won’t!</p>
+<h2 id="2-what-is-console_error_panic_hook"><a class="header" href="#2-what-is-console_error_panic_hook">2. What is <code>console_error_panic_hook</code>?</a></h2>
+<p>The <a href="https://crates.io/crates/console_error_panic_hook">crate <code>console_error_panic_hook</code></a> allows debugging Rust panic
+messages in a web browser, making it much easier to debug WebAssembly code.</p>
+<p>Let’s compare what happens when Rust code panics before and after enabling the
+feature:</p>
+<p><strong>Before:</strong> <code>"RuntimeError: Unreachable executed"</code></p>
+<p><strong>After:</strong> <code>"panicked at 'index out of bounds: the len is 3 but the index is 4', libcore/slice/mod.rs:2046:10"</code></p>
+<p>To do this, a <a href="https://doc.rust-lang.org/std/panic/fn.set_hook.html">panic hook</a> is configured that logs panics to the
+developer console via the JavaScript <code>console.error</code> function.</p>
+<p>Note though that <code>console_error_panic_hook</code> is not entirely automatic, so you’ll
+need to make sure that <code>utils::set_panic_hook()</code> is called before any of our
+code runs (and it’s safe to run <code>set_panic_hook</code> many times).</p>
+<p>For more details, see the <a href="https://github.com/rustwasm/console_error_panic_hook"><code>console_error_panic_hook</code>
+repository</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="wee_alloc"><a class="header" href="#wee_alloc">wee_alloc</a></h1>
+<ol>
+<li><a href="#what-is-wee_alloc">What is <code>wee_alloc</code>?</a></li>
+<li><a href="#enabling-wee_alloc">Enabling <code>wee_alloc</code></a></li>
+</ol>
+<h2 id="what-is-wee_alloc"><a class="header" href="#what-is-wee_alloc">What is <code>wee_alloc</code>?</a></h2>
+<p>WebAssembly code is frequently transmitted over the wire to users, so compiled
+code size is often important to ensure an application loads quickly and is
+responsive.</p>
+<blockquote>
+<p><code>wee_alloc</code> is a tiny allocator designed for WebAssembly that has a (pre-compression) code-size footprint of only a single kilobyte.</p>
+</blockquote>
+<p><a href="http://fitzgeraldnick.com/2018/02/09/wee-alloc.html">An analysis</a> suggests that over half of the bare minimum WebAssembly memory footprint is required by Rust’s default memory allocator. Yet, WebAssembly code often does not require a sophisticated allocator, since it often just requests a couple of large initial allocations.</p>
+<p><code>wee_alloc</code> trades off size for speed. It has a tiny code-size
+footprint, but it is not competitive in terms of performance with the
+default global allocator, for example.</p>
+<p>For even more details, see the <a href="https://github.com/rustwasm/wee_alloc"><code>wee_alloc</code>
+repository</a>, or
+<a href="https://rustwasm.github.io/docs/book/reference/code-size.html">general documentation</a> about
+shrinking code size of WebAssembly binaries.</p>
+<h2 id="enabling-wee_alloc"><a class="header" href="#enabling-wee_alloc">Enabling <code>wee_alloc</code></a></h2>
+<p>In <code>lib.rs</code>, we have the configuration for <code>wee_alloc</code> inside a <code>cfg_if!</code> macro:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>cfg_if! {
+    if #[cfg(feature = "wee_alloc")] {
+        #[global_allocator]
+        static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>This code block is intended to initialize <code>wee_alloc</code> as the global memory
+allocator, but only if the <code>wee_alloc</code> feature is enabled at compile time. The
+feature can be enabled by passing extra options while building:</p>
+<pre><code>$ wasm-pack build --features wee_alloc
+</code></pre>
+<p>or alternatively you could turn it on by default in <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[features]
+default = ["console_error_panic_hook", "wee_alloc"]
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="testswebrs"><a class="header" href="#testswebrs">tests/web.rs</a></h1>
+<p><code>web.rs</code> is an integration test <a href="https://doc.rust-lang.org/cargo/guide/tests.html">defined with Cargo</a> that is
+intended to be run in a headless web browser via the <code>wasm-pack test</code> command.</p>
+<p>It contains three key parts:</p>
+<ol>
+<li><a href="#a1-wasm_bindgen_test-functions"><code>#[wasm_bindgen_test] functions</code></a></li>
+<li><a href="#a2-crate-configuration">Crate Configuration</a></li>
+<li><a href="#a3-cfg-directives"><code>#![cfg]</code> directives</a></li>
+</ol>
+<hr>
+<h2 id="1-wasm_bindgen_test-functions"><a class="header" href="#1-wasm_bindgen_test-functions">1. <code>#[wasm_bindgen_test]</code> functions</a></h2>
+<p>The <code>#[wasm_bindgen_test]</code> is like the <a href="https://doc.rust-lang.org/book/ch11-01-writing-tests.html">normal Rust <code>#[test]</code>
+attribute</a>, except it defines a test accessible to WebAssembly and
+headless web browser testing.</p>
+<blockquote>
+<p><strong>Note</strong>: Eventually <code>#[test]</code> will work with WebAssembly as well! Currently
+though <a href="https://github.com/rust-lang/rust/issues/50297">custom test frameworks</a> are not stable.</p>
+</blockquote>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[wasm_bindgen_test]
+fn pass() {
+    assert_eq!(1 + 1, 2);
+}
+<span class="boring">}</span></code></pre>
+<p>Here the <code>pass</code> function is a unit test which asserts that arithmetic works in
+WebAssembly like we’d expect everywhere else. If the test panics (such as the
+<code>assert_eq!</code> being false) then the test will fail, otherwise the test will
+succeed.</p>
+<p>The <a href="https://rustwasm.github.io/docs/wasm-bindgen/wasm-bindgen-test/index.html">reference documentation for <code>#[wasm_bindgen_test]</code></a> should have
+more information about defining these tests.</p>
+<h2 id="2-crate-configuration"><a class="header" href="#2-crate-configuration">2. Crate Configuration</a></h2>
+<p>Other than the test in this module, we’ll also see:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use wasm_bindgen_test::*;
+
+wasm_bindgen_test_configure!(run_in_browser);
+<span class="boring">}</span></code></pre>
+<p>Like we saw earlier in <code>src/lib.rs</code> the <code>*</code> import pulls in everything from
+<code>wasm_bindgen_test</code>, notably the <code>wasm_bindgen_test_configure</code> macro and the
+<code>wasm_bindgen_test</code> attribute.</p>
+<p>The <code>wasm_bindgen_test_configure</code> macro (denoted by ending in <code>!</code>) is used to
+indicate that the test is intended to execute in a web browser as opposed to
+Node.js, which is the default.</p>
+<h2 id="3-cfg-directives"><a class="header" href="#3-cfg-directives">3. <code>#![cfg]</code> directives</a></h2>
+<p>The last part we’ll notice about this crate is this statement at the top:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span>#![cfg(target_arch = "wasm32")]
+<span class="boring">fn main() {
+</span><span class="boring">}</span></code></pre>
+<p>This statement means that the test is only intended for the <code>wasm32</code>
+architecture, or the <code>wasm32-unknown-unknown</code> target. This enables <code>cargo test</code>
+to work in your project if the library is also being developed for other
+platforms by ensuring that these tests only execute in a web browser.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="building-your-project"><a class="header" href="#building-your-project">Building your project</a></h1>
+<p>We’ve written our code so now we need to build it.</p>
+<p>We are writing a crate that should be used in the browser, so we run this in
+our terminal:</p>
+<pre><code class="language-bash">$ wasm-pack build
+</code></pre>
+<p>If you were writing a package that should be used in Node.js (with CommonJS
+modules, e.g. <code>require</code>), you would run this in your terminal:</p>
+<pre><code class="language-bash">$ wasm-pack build --target nodejs
+</code></pre>
+<p>This command when run does a few things:</p>
+<ol>
+<li>It’ll compile your code to wasm if you haven’t already</li>
+<li>It’ll generate a <code>pkg</code> folder with the wasm file, a JS wrapper file around
+the wasm, your README, and a <code>package.json</code> file.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="testing-your-project"><a class="header" href="#testing-your-project">Testing your project</a></h1>
+<p>Now after writing and building code, let’s actually execute it! You can execute
+tests with:</p>
+<pre><code class="language-bash">$ wasm-pack test --firefox
+[INFO]: Checking for the Wasm target...
+    Finished dev [unoptimized + debuginfo] target(s) in 0.02s
+     Running target/wasm32-unknown-unknown/debug/deps/web-9e7d380f8600b08e.wasm
+Interactive browsers tests are now available at http://127.0.0.1:8000
+
+Note that interactive mode is enabled because `NO_HEADLESS`
+is specified in the environment of this process. Once you're
+done with testing you'll need to kill this server with
+Ctrl-C.
+</code></pre>
+<p>The console won’t finish just yet, but as indicated you can visit
+http://127.0.0.1:8000 in your web browser to see the test output:</p>
+<pre><code>running 1 test
+
+test web::pass ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored
+</code></pre>
+<p>and we’ve now executed our first tests in a web browser!</p>
+<p>If you’d like to execute tests in a headless web browser (you don’t need to
+manually visit a page) you can do:</p>
+<pre><code class="language-bash">$ wasm-pack test --headless --firefox
+</code></pre>
+<p>and similarly if you’re developing a project for Node.js you can also execute
+<code>wasm-pack test --nodejs</code> to run tests in Node.</p>
+<p>Be sure to see the <a href="https://rustwasm.github.io/docs/wasm-bindgen/wasm-bindgen-test/index.html">testing reference documentation</a> for
+other supported features as well!</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="package-code-for-npm"><a class="header" href="#package-code-for-npm">Package Code for npm</a></h1>
+<p>We’ve made our code so now we need to package it all up. In your project directory run the following
+command:</p>
+<pre><code class="language-bash">$ wasm-pack build --scope MYSCOPE
+</code></pre>
+<p>where <code>MYSCOPE</code> is your npm username. Normally you could just type <code>wasm-pack build</code> but since
+other people are doing this tutorial as well we don’t want conflicts with the <code>wasm-add</code> package
+name! This command when run does a few things:</p>
+<ol>
+<li>It’ll compile your code to wasm if you haven’t already</li>
+<li>It’ll generate a pkg folder with the wasm file, a JS wrapper file around the wasm, your README,
+and a <code>package.json</code> file.</li>
+</ol>
+<p>This is everything you need to upload your code to npm! Let’s do just that!</p>
+<p>First off you’ll need to login to npm with the account you made earlier if you didn’t already have
+one:</p>
+<pre><code class="language-bash">$ wasm-pack login
+</code></pre>
+<p>Next you’ll need to go into the <code>pkg</code> directory and actually upload the package:</p>
+<pre><code class="language-bash">$ cd pkg
+$ npm publish --access=public
+</code></pre>
+<p>Now normally if things are not scoped you can just do <code>npm publish</code> but if you give it a scope
+you’ll need to tell npm that this is actually public so it can publish it. We need to do that here
+since we gave our packages a scope to avoid conflicting with each other! Next up is actually running
+the code and verifying we got it from npm and how we can use that code.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="run-the-code-from-npm"><a class="header" href="#run-the-code-from-npm">Run The Code From npm</a></h1>
+<p>This portion of the tutorial will help you create a <a href="https://webpack.js.org/">Webpack</a> JavaScript project that will
+run your WebAssembly code in the browser.</p>
+<h2 id="scaffold-a-javascript-project-1"><a class="header" href="#scaffold-a-javascript-project-1">Scaffold a JavaScript Project</a></h2>
+<p>To scaffold a project that we can use our new package in, we’ll use an npm template called
+<a href="https://github.com/rustwasm/create-wasm-app"><code>create-wasm-app</code></a>. To use this run this command in a directory <em>different</em> than your Rust
+project:</p>
+<pre><code>npm init wasm-app my-new-wasm-app
+</code></pre>
+<p>Instead of <code>my-new-wasm-app</code> you can choose a different project name.
+The tool will create a directory with that name.</p>
+<p>If we look in that directory, we’ll see the following:</p>
+<ul>
+<li><code>.gitignore</code>: ignores <code>node_modules</code></li>
+<li><code>LICENSE-APACHE</code> and <code>LICENSE-MIT</code>: most Rust projects are licensed this way, so these are included for you</li>
+<li><code>README.md</code>: the file you are reading now!</li>
+<li><code>index.html</code>: a bare bones html document that includes the webpack bundle</li>
+<li><code>index.js</code>: example js file with a comment showing how to import and use a wasm pkg</li>
+<li><code>package.json</code> and <code>package-lock.json</code>:
+<ul>
+<li>pulls in devDependencies for using webpack:
+<ul>
+<li><a href="https://www.npmjs.com/package/webpack"><code>webpack</code></a></li>
+<li><a href="https://www.npmjs.com/package/webpack-cli"><code>webpack-cli</code></a></li>
+<li><a href="https://www.npmjs.com/package/webpack-dev-server"><code>webpack-dev-server</code></a></li>
+</ul>
+</li>
+<li>defines a <code>start</code> script to run <code>webpack-dev-server</code></li>
+</ul>
+</li>
+<li><code>webpack.config.js</code>: configuration file for bundling your js with webpack</li>
+</ul>
+<h2 id="add-your-npm-package"><a class="header" href="#add-your-npm-package">Add Your npm Package</a></h2>
+<p>The scaffolded project includes an example WebAssembly package, <code>hello-wasm-pack</code>, in your
+<code>package.json</code>. Go into the <code>package.json</code> file, add your package, and remove the
+<code>hello-wasm-pack</code> dependency from the <code>"dependencies"</code> section.</p>
+<p>Now, open up the <code>index.js</code> file. Replace the <code>hello-wasm-pack</code> in the first line with the
+name of your package:</p>
+<pre><code class="language-js">import * as wasm from "&lt;your package name&gt;";
+
+wasm.greet();
+</code></pre>
+<h2 id="run-the-project-1"><a class="header" href="#run-the-project-1">Run The Project</a></h2>
+<p>Before we run our project, we need to make sure we install our dependencies:</p>
+<pre><code class="language-bash">npm install
+</code></pre>
+<p>We should be ready to run our project now! To run our project we’ll run:</p>
+<pre><code class="language-bash">npm start
+</code></pre>
+<p>Then in a web browser navigate to <code>http://localhost:8080</code> and you should be greeted with an
+alert box that says “Hello World!”.</p>
+<p>If you did congrats you’ve successfully uploaded your first bit of wasm code to npm and used it
+properly!</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="cargotoml-configuration"><a class="header" href="#cargotoml-configuration"><code>Cargo.toml</code> Configuration</a></h1>
+<p><code>wasm-pack</code> can be configured via the <code>package.metadata.wasm-pack</code> key in
+<code>Cargo.toml</code>. Every option has a default, and is not required.</p>
+<p>There are three profiles: <code>dev</code>, <code>profiling</code>, and <code>release</code>. These correspond to
+the <code>--dev</code>, <code>--profiling</code>, and <code>--release</code> flags passed to <code>wasm-pack build</code>.</p>
+<p>The available configuration options and their default values are shown below:</p>
+<pre><code class="language-toml">[package.metadata.wasm-pack.profile.dev]
+# Should `wasm-opt` be used to further optimize the wasm binary generated after
+# the Rust compiler has finished? Using `wasm-opt` can often further decrease
+# binary size or do clever tricks that haven't made their way into LLVM yet.
+#
+# Configuration is set to `false` by default for the dev profile, but it can
+# be set to an array of strings which are explicit arguments to pass to
+# `wasm-opt`. For example `['-Os']` would optimize for size while `['-O4']`
+# would execute very expensive optimizations passes
+#
+# In most cases, the `-O[X]` flag is enough. However, if you require extreme
+# optimizations, see the full list of `wasm-opt` optimization flags
+# https://github.com/WebAssembly/binaryen/blob/version_117/test/lit/help/wasm-opt.test
+wasm-opt = ['-O']
+
+[package.metadata.wasm-pack.profile.dev.wasm-bindgen]
+# Should we enable wasm-bindgen's debug assertions in its generated JS glue?
+debug-js-glue = true
+# Should wasm-bindgen demangle the symbols in the "name" custom section?
+demangle-name-section = true
+# Should we emit the DWARF debug info custom sections?
+dwarf-debug-info = false
+# Should we omit the default import path?
+omit-default-module-path = false
+# Controls whether wasm-bindgen will split linked modules out into their own files. Enabling this is recommended, because it allows lazy-loading the linked modules and setting a stricter Content Security Policy. Only available in wasm-bindgen 0.2.95 and later.
+split-linked-modules = false
+
+[package.metadata.wasm-pack.profile.profiling]
+wasm-opt = ['-O']
+
+[package.metadata.wasm-pack.profile.profiling.wasm-bindgen]
+debug-js-glue = false
+demangle-name-section = true
+dwarf-debug-info = false
+omit-default-module-path = false
+
+# `wasm-opt` is on by default in for the release profile, but it can be
+# disabled by setting it to `false`
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
+[package.metadata.wasm-pack.profile.release.wasm-bindgen]
+debug-js-glue = false
+demangle-name-section = true
+dwarf-debug-info = false
+omit-default-module-path = false
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+<h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
+<p>The technical prerequisites for contributing to this project are the same as for
+using it. You can find them documented <a href="#prerequisites">here</a>.</p>
+<p>You’ll also want to check out the contributing <a href="https://github.com/wasm-bindgen/wasm-pack/blob/master/CONTRIBUTING.md">guidelines</a>.</p>
+<h2 id="-up-and-running"><a class="header" href="#-up-and-running">🏃‍♀️ Up and Running</a></h2>
+<ol>
+<li>fork and clone the <code>wasm-bindgen/wasm-pack</code> repository</li>
+<li>install [node/npm]</li>
+<li><code>cd wasm-pack</code></li>
+<li><code>cargo run</code>. To test command line arguments you can run <code>cargo run -- &lt;args&gt;</code>.</li>
+</ol>
+<h2 id="documentation"><a class="header" href="#documentation">Documentation</a></h2>
+<p>Documentation lives in the <code>/docs</code> directory. Each command has its own page.
+Additionally there are extra pages explaining the prerequisites, setup, and how to
+contribute (which you are reading now!).</p>
+<h2 id="tests"><a class="header" href="#tests">Tests</a></h2>
+<p>Tests live in the <code>/tests</code> directory. To run the tests you can run:</p>
+<pre><code>cargo test
+</code></pre>
+<p>You can also manually test the CLI tool by running:</p>
+<pre><code>cargo run -- &lt;args&gt;
+</code></pre>
+<p>…for example:</p>
+<pre><code>cargo run -- init /tests/fixtures/js-hello-world --scope=ag_dubs
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
