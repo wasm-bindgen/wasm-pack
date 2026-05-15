@@ -258,6 +258,7 @@ pub fn cargo_install(
 
     cmd.arg("install")
         .arg("--force")
+        .arg("--locked")
         .arg(crate_name)
         .arg("--root")
         .arg(&tmp);
