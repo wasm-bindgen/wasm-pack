@@ -217,6 +217,26 @@ jobs:
           asset_content_type: application/gzip
           asset_name: wasm-pack-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_ARM64_TARGET }}.tar.gz
 
+
+  cargo-publish:
+    name: Publish to crates.io
+    environment:
+      name: crate-publish
+    permissions:
+      id-token: write
+    if: github.repository == 'wasm-bindgen/wasm-pack'
+    needs:
+      - release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
   npm-publish:
     name: Publish npm package
     needs: release
