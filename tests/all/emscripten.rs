@@ -276,6 +276,49 @@ fn emscripten_package_json_points_at_mjs() {
 }
 
 #[test]
+fn emscripten_dts_is_decorated_with_factory_shape() {
+    skip_without_emcc!();
+    let fixture = utils::fixture::emscripten_hello_world();
+    let mut cmd = fixture.wasm_pack();
+    if let Some(bin) = local_wasm_bindgen_bin() {
+        cmd.env("WASM_BINDGEN_BIN", bin);
+    } else {
+        fixture.install_local_wasm_bindgen();
+    }
+    cmd.arg("build")
+        .arg("--target")
+        .arg("web")
+        .assert()
+        .success();
+
+    let dts = std::fs::read_to_string(fixture.path.join("pkg/em_hello_world.d.ts")).unwrap();
+    // wasm-bindgen's own surface should be present untouched.
+    assert!(
+        dts.contains("interface BindgenModule"),
+        "bindgen-emitted BindgenModule interface should be preserved"
+    );
+    // wasm-pack appends the factory shape on top.
+    for needle in [
+        "export type MainModule = BindgenModule",
+        "declare function ModuleFactory(opts?: object): Promise<MainModule>",
+        "export default ModuleFactory",
+    ] {
+        assert!(
+            dts.contains(needle),
+            "expected decorated .d.ts to contain {needle:?}; got:\n{dts}"
+        );
+    }
+    // We must NOT claim runtime members that aren't actually on the
+    // returned Module object (would be a typing lie).
+    for forbidden in ["EmscriptenRuntime", "HEAPU8", "HEAP8"] {
+        assert!(
+            !dts.contains(forbidden),
+            "decorated .d.ts must not claim {forbidden:?} (not exposed on the factory return); got:\n{dts}"
+        );
+    }
+}
+
+#[test]
 fn emscripten_test_command_is_rejected() {
     // No emcc gating — this path doesn't actually invoke emcc, just
     // verifies the early-rejection logic in `wasm-pack test`.

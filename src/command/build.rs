@@ -709,30 +709,31 @@ impl Build {
             emcc_opt_level_for(&self.profile)
         };
 
-        // TODO: re-enable emcc's `--emit-tsd` once
-        // https://github.com/emscripten-core/emscripten (TSD multi-value PR)
-        // lands. emcc currently asserts in its TSD generator on any wasm
-        // function with multiple return values, and wasm-bindgen emits
-        // those for every Rust-side String / Vec / Result / struct
-        // return. The merge code path (`merge_emscripten_and_bindgen_dts`)
-        // is kept ready below — flip `emscripten_dts` from `None` to
-        // `Some(...)` once emcc cooperates and the merge will produce a
-        // union `.d.ts` describing both EmscriptenModule and BindgenModule.
-        let emscripten_dts: Option<PathBuf> = None;
-        let _ = (
-            &bindgen_dts,
-            merge_emscripten_and_bindgen_dts as fn(&Path, &Path) -> Result<()>,
-        );
-
+        // We deliberately don't ask emcc for `--emit-tsd`. For a pure-Rust
+        // wasm-pack package the TS surface is fully knowable to us:
+        // wasm-bindgen owns the user-facing exports (already typed in its
+        // own .d.ts), and emcc's runtime surface is a small curated set
+        // wasm-pack chooses to expose. emcc's TSD would only add value if
+        // we linked arbitrary C/C++ exports, which the wasm-pack flow
+        // doesn't support today. Avoiding it also sidesteps the emcc
+        // assertion on wasm-bindgen-style multi-value-return exports.
         emcc_post_link(
             &in_wasm,
             &in_library,
             &out_js,
-            emscripten_dts.as_deref(),
             &post_link_settings,
             opt_level,
         )?;
         info!("emcc --post-link produced {out_js:?}.");
+
+        // Decorate wasm-bindgen's bare .d.ts with the emscripten-shaped
+        // factory: an `EmscriptenRuntime` interface for the runtime members
+        // we surface, a `MainModule` intersection type, and a default-export
+        // factory declaration. After this `import M from "./<name>.mjs"`
+        // type-checks against the produced module.
+        if !self.disable_dts && bindgen_dts.exists() {
+            decorate_bindgen_dts_for_emscripten(&bindgen_dts)?;
+        }
 
         // Clean up intermediate artifacts that shouldn't ship in pkg/.
         // `_bg.wasm` (pre-post-link) is superseded by the post-linked
@@ -1106,18 +1107,10 @@ fn emcc_opt_level_for(profile: &BuildProfile) -> &'static str {
 
 /// Invoke `emcc --post-link` to merge the wasm-bindgen output with
 /// emscripten's standard JS runtime, producing the final JS module.
-///
-/// If `emit_tsd` is supplied, emcc also tries to emit an EmscriptenModule
-/// `.d.ts` to that path. Currently emcc's TSD generator asserts on
-/// wasm-bindgen-style multi-value returns, so the file may not be
-/// produced — we leave it as best-effort and rely on
-/// `merge_emscripten_and_bindgen_dts` to fall back gracefully when the
-/// file is missing.
 fn emcc_post_link(
     in_wasm: &Path,
     in_library: &Path,
     out_js: &Path,
-    emit_tsd: Option<&Path>,
     settings: &EmccPostLinkSettings,
     opt_level: &str,
 ) -> Result<()> {
@@ -1134,9 +1127,6 @@ fn emcc_post_link(
     if settings.source_phase_imports {
         cmd.arg("-sSOURCE_PHASE_IMPORTS=1");
     }
-    if let Some(tsd) = emit_tsd {
-        cmd.arg("--emit-tsd").arg(tsd);
-    }
     cmd.arg("-o").arg(out_js);
 
     let status = cmd.status().context("running emcc --post-link")?;
@@ -1146,43 +1136,49 @@ fn emcc_post_link(
     Ok(())
 }
 
-/// Fuse emscripten's `EmscriptenModule` typings with wasm-bindgen's
-/// `BindgenModule` typings into a single `.d.ts` written at `bindgen_dts`
-/// (overwriting it in place).
+/// Append the emscripten factory declaration to wasm-bindgen's `.d.ts`.
 ///
-/// emcc's `--emit-tsd` output ends with:
-///   ```ts
-///   export type MainModule = EmscriptenModule;
-///   ```
-/// We strip that line, append wasm-bindgen's typings, and replace it with
-/// an intersection:
-///   ```ts
-///   export type MainModule = EmscriptenModule & BindgenModule;
-///   ```
-/// so consumers see a single typed factory covering both surfaces.
-fn merge_emscripten_and_bindgen_dts(emscripten_dts: &Path, bindgen_dts: &Path) -> Result<()> {
-    let em_src = std::fs::read_to_string(emscripten_dts)
-        .with_context(|| format!("reading emscripten .d.ts at {emscripten_dts:?}"))?;
-    let bg_src = std::fs::read_to_string(bindgen_dts)
+/// wasm-bindgen's emscripten-mode output emits an unexported
+/// `interface BindgenModule { ... }` and a sibling class export per
+/// `#[wasm_bindgen] pub struct`, but doesn't declare the default-exported
+/// factory function that emscripten's `-sMODULARIZE -sEXPORT_ES6` emits
+/// in the JS. Without this decoration, `import M from "./<name>.mjs"`
+/// type-checks against `any`.
+///
+/// We append:
+///
+/// ```ts
+/// export type MainModule = BindgenModule;
+/// declare function ModuleFactory(opts?: object): Promise<MainModule>;
+/// export default ModuleFactory;
+/// ```
+///
+/// We deliberately do NOT type emscripten runtime members (heap views,
+/// `_initialize`, ccall/cwrap, etc.). Those exist as module-internal
+/// variables in the emscripten runtime but aren't attached to the
+/// factory's returned object unless explicitly exposed via
+/// `-sEXPORTED_RUNTIME_METHODS`. wasm-pack doesn't request that today,
+/// so claiming them in the .d.ts would be a lie.
+fn decorate_bindgen_dts_for_emscripten(bindgen_dts: &Path) -> Result<()> {
+    const DECORATION: &str = r#"
+
+// --- wasm-pack: emscripten factory shape ---
+// emcc's MODULARIZE/EXPORT_ES6 wraps the wasm-bindgen surface in an async
+// factory. This declaration types `import M from "./<name>.mjs"` so the
+// produced module is usable from TypeScript.
+export type MainModule = BindgenModule;
+declare function ModuleFactory(opts?: object): Promise<MainModule>;
+export default ModuleFactory;
+"#;
+
+    let mut existing = std::fs::read_to_string(bindgen_dts)
         .with_context(|| format!("reading bindgen .d.ts at {bindgen_dts:?}"))?;
-
-    let mut merged = String::new();
-    for line in em_src.lines() {
-        if line.trim_start().starts_with("export type MainModule") {
-            continue;
-        }
-        merged.push_str(line);
-        merged.push('\n');
+    if !existing.ends_with('\n') {
+        existing.push('\n');
     }
-    merged.push_str("\n// --- wasm-bindgen-generated types ---\n");
-    merged.push_str(&bg_src);
-    if !merged.ends_with('\n') {
-        merged.push('\n');
-    }
-    merged.push_str("\nexport type MainModule = EmscriptenModule & BindgenModule;\n");
-
-    std::fs::write(bindgen_dts, merged)
-        .with_context(|| format!("writing merged .d.ts to {bindgen_dts:?}"))?;
+    existing.push_str(DECORATION);
+    std::fs::write(bindgen_dts, existing)
+        .with_context(|| format!("writing decorated .d.ts to {bindgen_dts:?}"))?;
     Ok(())
 }
 

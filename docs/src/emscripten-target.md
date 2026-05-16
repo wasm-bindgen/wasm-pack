@@ -132,11 +132,15 @@ A few things differ from the default wasm-pack target:
 - **`wasm-pack test` is not supported.** The `wasm-bindgen-test` runner
   isn't currently wired up for emscripten; tests must run via
   `cargo test` directly.
-- **TypeScript declarations come from wasm-bindgen only.** emcc's
-  `--emit-tsd` mode currently asserts on wasm-bindgen-style multi-value
-  returns (any Rust function returning `String`, `Vec`, etc.). The `.d.ts`
-  in `pkg/` describes the wasm-bindgen surface but does not type
-  emscripten runtime methods.
+- **TypeScript declarations are wasm-bindgen-driven and wasm-pack-decorated.**
+  The `.d.ts` in `pkg/` is wasm-bindgen's output (covering every
+  `#[wasm_bindgen]` export and class), with a default-export factory
+  declaration appended so `import M from "./<name>.mjs"` type-checks
+  cleanly. The factory return type is the wasm-bindgen surface only.
+  emscripten runtime members (`HEAP*`, `_initialize`, `ccall`/`cwrap`,
+  `FS`) aren't attached to the factory return by default and are not
+  typed; if you need them you can extend the `.d.ts` in `pkg/` after the
+  build.
 - **Optimization is capped at `-O2`.** emcc's `-O3` enables wasm-opt's
   `--minify-imports-and-exports` pass, which renames wasm exports to
   single letters — but wasm-bindgen's generated JS glue references the
