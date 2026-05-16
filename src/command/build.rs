@@ -685,6 +685,12 @@ impl Build {
         let in_wasm = self.out_dir.join(format!("{name}_bg.wasm"));
         let in_library = self.out_dir.join("library_bindgen.js");
         let bindgen_dts = self.out_dir.join(format!("{name}.d.ts"));
+        // `library_bindgen.extern-pre.js` only exists when the crate has
+        // `#[wasm_bindgen(module = "...")]` imports. wasm-bindgen routes
+        // those there because ESM `import` statements can't live inside
+        // emcc's modularize wrapper.
+        let extern_pre = self.out_dir.join("library_bindgen.extern-pre.js");
+        let extern_pre = extern_pre.exists().then_some(extern_pre);
 
         // Drop stale artifacts from prior non-emscripten builds in the
         // same out_dir. The non-emscripten flow ships `<name>.js`, the
@@ -720,6 +726,7 @@ impl Build {
         emcc_post_link(
             &in_wasm,
             &in_library,
+            extern_pre.as_deref(),
             &out_js,
             &post_link_settings,
             opt_level,
@@ -737,12 +744,17 @@ impl Build {
 
         // Clean up intermediate artifacts that shouldn't ship in pkg/.
         // `_bg.wasm` (pre-post-link) is superseded by the post-linked
-        // `<name>.wasm`; `library_bindgen.js` was a build-time-only DSL file.
-        for stale in [
+        // `<name>.wasm`; `library_bindgen.js` and `library_bindgen.extern-pre.js`
+        // were build-time-only DSL/import files.
+        let mut to_clean = vec![
             in_library,
             in_wasm,
             self.out_dir.join(format!("{name}_bg.wasm.d.ts")),
-        ] {
+        ];
+        if let Some(p) = extern_pre {
+            to_clean.push(p);
+        }
+        for stale in to_clean {
             let _ = std::fs::remove_file(&stale);
         }
         Ok(())
@@ -1107,9 +1119,16 @@ fn emcc_opt_level_for(profile: &BuildProfile) -> &'static str {
 
 /// Invoke `emcc --post-link` to merge the wasm-bindgen output with
 /// emscripten's standard JS runtime, producing the final JS module.
+///
+/// When `extern_pre` is provided, it's passed via `--extern-pre-js`. emcc
+/// inlines that file verbatim *before* the modularize wrapper, which is
+/// where ESM `import` statements must live. wasm-bindgen routes module
+/// imports there because they can't legally appear inside emcc's
+/// `--js-library` content (that gets evaluated inside the wrapper).
 fn emcc_post_link(
     in_wasm: &Path,
     in_library: &Path,
+    extern_pre: Option<&Path>,
     out_js: &Path,
     settings: &EmccPostLinkSettings,
     opt_level: &str,
@@ -1126,6 +1145,9 @@ fn emcc_post_link(
         .arg("-Wno-experimental");
     if settings.source_phase_imports {
         cmd.arg("-sSOURCE_PHASE_IMPORTS=1");
+    }
+    if let Some(path) = extern_pre {
+        cmd.arg("--extern-pre-js").arg(path);
     }
     cmd.arg("-o").arg(out_js);
 

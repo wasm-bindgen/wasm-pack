@@ -600,6 +600,73 @@ extern "C" {
 pub fn rs_double_via_js(n: i32) -> i32 {
     js_doubler(n)
 }
+
+// `#[wasm_bindgen(module = "...")]` ESM imports — wasm-bindgen emits these
+// to `library_bindgen.extern-pre.js` (an --extern-pre-js sidecar) so they
+// live at module top-level above emcc's modularize wrapper. The library
+// functions inlined into the wrapper close over the imported bindings
+// lexically.
+#[wasm_bindgen(module = "node:os")]
+extern "C" {
+    #[wasm_bindgen(js_name = hostname)]
+    fn node_os_hostname() -> String;
+}
+
+#[wasm_bindgen]
+pub fn rs_hostname() -> String {
+    node_os_hostname()
+}
+
+// `js_namespace = console` — single-level namespace on a global object.
+// Resolves at JS call site as `console.log(...)`.
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn console_log(msg: &str);
+}
+
+/// Calls `console.log(...)` from Rust. The integration test stubs out
+/// `console.log` to capture the call.
+#[wasm_bindgen]
+pub fn rs_log(msg: &str) {
+    console_log(msg);
+}
+
+// `js_namespace` paired with `module = "..."`. The namespace resolves on
+// the imported binding, not on `globalThis`.
+#[wasm_bindgen(module = "node:path")]
+extern "C" {
+    #[wasm_bindgen(js_namespace = posix, js_name = join)]
+    fn node_path_posix_join(a: &str, b: &str) -> String;
+}
+
+/// Calls `posix.join(...)` on `node:path`. Exercises the
+/// `js_namespace + module = "..."` combination, where the namespace
+/// resolves against the imported module's exports rather than a global.
+#[wasm_bindgen]
+pub fn rs_path_posix_join(a: &str, b: &str) -> String {
+    node_path_posix_join(a, b)
+}
+
+// Class export with `js_namespace = ["app", "math"]` — the class attaches
+// at `Module.app.math.Calc` rather than `Module.Calc`. The matching
+// `js_namespace` on the impl is required (the macro can't see the struct's
+// attrs across invocations).
+#[wasm_bindgen(js_namespace = ["app", "math"])]
+pub struct Calc {
+    value: i32,
+}
+
+#[wasm_bindgen(js_namespace = ["app", "math"])]
+impl Calc {
+    #[wasm_bindgen(constructor)]
+    pub fn new(initial: i32) -> Calc {
+        Calc { value: initial }
+    }
+    pub fn double(&self) -> i32 {
+        self.value * 2
+    }
+}
             "#,
         );
     fixture

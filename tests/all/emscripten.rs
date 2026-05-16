@@ -113,6 +113,33 @@ fn make_node_driver(mjs_path: &Path) -> String {
         expect('Counter.value',   c.value,                                     15);
 
         expect('rs_double_via_js', m.rs_double_via_js(21),                     42);
+
+        // `rs_hostname` exercises `#[wasm_bindgen(module = "node:os")]` —
+        // wasm-bindgen routes the import through `library_bindgen.extern-pre.js`.
+        // We don't assert the exact value (hostnames vary across CI runners),
+        // just that the call doesn't throw and returns a non-empty string.
+        const hn = m.rs_hostname();
+        expect('rs_hostname returns string', typeof hn,                        'string');
+        expect('rs_hostname non-empty',      hn.length > 0,                    true);
+
+        // `js_namespace = console` — calling a method on a global namespace.
+        // We stub `console.log` to capture the call and restore it after.
+        const origLog = console.log;
+        let captured = null;
+        console.log = (s) => {{ captured = s; }};
+        m.rs_log('namespaced log');
+        console.log = origLog;
+        expect('rs_log via console.log',     captured,                          'namespaced log');
+
+        // `js_namespace = posix` + `module = "node:path"` — namespace on an
+        // ESM-imported binding, not on globalThis.
+        expect('rs_path_posix_join',         m.rs_path_posix_join('a', 'b'),    'a/b');
+
+        // Class export with `js_namespace = ["app", "math"]` — the class
+        // attaches at `Module.app.math.Calc` rather than `Module.Calc`.
+        expect('Calc lives under app.math',  typeof m.app?.math?.Calc,          'function');
+        const calc = new m.app.math.Calc(21);
+        expect('Calc.double',                calc.double(),                      42);
         "#,
         mjs = mjs_path.display(),
     )
