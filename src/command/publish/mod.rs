@@ -43,7 +43,7 @@ pub fn publish(
                 let out_dir = format!("{}/pkg", out_dir);
                 let target = Select::new()
                     .with_prompt("target[default: bundler]")
-                    .items(&["bundler", "nodejs", "web", "no-modules"])
+                    .items(&["bundler", "nodejs", "web", "no-modules", "deno", "module"])
                     .default(0)
                     .interact()?
                     .to_string();

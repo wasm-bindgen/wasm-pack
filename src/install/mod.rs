@@ -58,6 +58,25 @@ pub fn download_prebuilt_or_cargo_install(
     version: &str,
     install_permitted: bool,
 ) -> Result<Status> {
+    if let Tool::WasmBindgen = tool {
+        if let Ok(bin) = env::var("WASM_BINDGEN_BIN") {
+            let path = Path::new(&bin);
+            if path.is_file() {
+                info!(
+                    "Using wasm-bindgen binary from WASM_BINDGEN_BIN: {}",
+                    path.display()
+                );
+                let download = Download::at(path.parent().unwrap());
+                return Ok(Status::Found(download));
+            } else {
+                bail!(
+                    "WASM_BINDGEN_BIN is set to '{}' but the file does not exist",
+                    bin
+                );
+            }
+        }
+    }
+
     // If the tool is installed globally and it has the right version, use
     // that. Assume that other tools are installed next to it.
     //

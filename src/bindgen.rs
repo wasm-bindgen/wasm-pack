@@ -22,6 +22,7 @@ pub fn wasm_bindgen_build(
     reference_types: bool,
     target: Target,
     profile: BuildProfile,
+    emscripten: bool,
 ) -> Result<()> {
     let out_dir = out_dir.to_str().unwrap();
 
@@ -47,11 +48,24 @@ pub fn wasm_bindgen_build(
         cmd.arg("--reference-types");
     }
 
-    let target_arg = build_target_arg(target, &bindgen_path)?;
-    if supports_dash_dash_target(&bindgen_path)? {
-        cmd.arg("--target").arg(target_arg);
+    if emscripten {
+        // wasm-bindgen's Emscripten output mode is auto-detected from the
+        // `__wasm_bindgen_emscripten_marker` custom section embedded in the
+        // wasm by the `wasm-bindgen` runtime. We must not pass `--target`
+        // here: passing one would force a non-Emscripten output mode and
+        // wasm-bindgen would fail to find the intrinsics it needs.
+        //
+        // `--keep-lld-exports` preserves the symbols `wasm-ld` exported
+        // (which emcc post-link expects); without it wasm-bindgen would
+        // strip them during its rewrite pass.
+        cmd.arg("--keep-lld-exports");
     } else {
-        cmd.arg(target_arg);
+        let target_arg = build_target_arg(target, &bindgen_path)?;
+        if supports_dash_dash_target(&bindgen_path)? {
+            cmd.arg("--target").arg(target_arg);
+        } else {
+            cmd.arg(target_arg);
+        }
     }
 
     if let Some(value) = out_name {
@@ -121,6 +135,9 @@ fn build_target_arg_legacy(target: Target, cli_path: &Path) -> Result<String> {
         }
         Target::Bundler => "--browser",
         Target::Deno => "--deno",
+        Target::Module => {
+            bail!("The 'module' target requires wasm-bindgen >= 0.2.99. Please update your project to a newer version of wasm-bindgen.")
+        }
     };
     Ok(target_arg.to_string())
 }
