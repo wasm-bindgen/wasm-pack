@@ -719,7 +719,10 @@ impl Build {
         // `Some(...)` once emcc cooperates and the merge will produce a
         // union `.d.ts` describing both EmscriptenModule and BindgenModule.
         let emscripten_dts: Option<PathBuf> = None;
-        let _ = (&bindgen_dts, merge_emscripten_and_bindgen_dts as fn(&Path, &Path) -> Result<()>);
+        let _ = (
+            &bindgen_dts,
+            merge_emscripten_and_bindgen_dts as fn(&Path, &Path) -> Result<()>,
+        );
 
         emcc_post_link(
             &in_wasm,
@@ -884,7 +887,12 @@ fn warn_if_emcc_too_old(emcc_path: &Path) {
              emsdk activate latest`."
         ));
     } else {
-        log::info!("emcc version OK ({}.{}.{}).", version.0, version.1, version.2);
+        log::info!(
+            "emcc version OK ({}.{}.{}).",
+            version.0,
+            version.1,
+            version.2
+        );
     }
 }
 
@@ -914,7 +922,10 @@ fn parse_dotted_version(token: &str) -> Option<(u32, u32, u32)> {
         // Four or more dotted components — not a version we recognise.
         return None;
     }
-    let patch_digits: String = patch_tok.chars().take_while(|c| c.is_ascii_digit()).collect();
+    let patch_digits: String = patch_tok
+        .chars()
+        .take_while(|c| c.is_ascii_digit())
+        .collect();
     if patch_digits.is_empty() {
         return None;
     }
@@ -971,9 +982,9 @@ fn emcc_link(lib_path: &str, out_wasm: &PathBuf) -> Result<()> {
 /// `llvm-nm`. Returns names with the emscripten `_`-prefix convention
 /// applied (emcc strips one leading underscore before passing to wasm-ld).
 fn collect_wasm_bindgen_exports(lib_path: &str) -> Result<Vec<String>> {
-    let llvm_nm = which::which("llvm-nm").or_else(|_| which::which("nm")).context(
-        "llvm-nm not found on PATH; required to discover wasm-bindgen export symbols",
-    )?;
+    let llvm_nm = which::which("llvm-nm")
+        .or_else(|_| which::which("nm"))
+        .context("llvm-nm not found on PATH; required to discover wasm-bindgen export symbols")?;
 
     let output = Command::new(&llvm_nm)
         .arg("--defined-only")
@@ -1003,9 +1014,7 @@ fn collect_wasm_bindgen_exports(lib_path: &str) -> Result<Vec<String>> {
             s.starts_with("__wbg_")
                 || s.starts_with("__wbindgen_")
                 || s.starts_with("__externref_")
-                || (!s.starts_with('_')
-                    && !s.starts_with("anon.")
-                    && !s.starts_with("emscripten_"))
+                || (!s.starts_with('_') && !s.starts_with("anon.") && !s.starts_with("emscripten_"))
         })
         .map(|s| format!("_{s}"))
         .collect();
@@ -1176,7 +1185,6 @@ fn merge_emscripten_and_bindgen_dts(emscripten_dts: &Path, bindgen_dts: &Path) -
         .with_context(|| format!("writing merged .d.ts to {bindgen_dts:?}"))?;
     Ok(())
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -244,19 +244,33 @@ fn emscripten_package_json_points_at_mjs() {
     } else {
         fixture.install_local_wasm_bindgen();
     }
-    cmd.arg("build").arg("--target").arg("web").assert().success();
+    cmd.arg("build")
+        .arg("--target")
+        .arg("web")
+        .assert()
+        .success();
 
-    let pkg_json: serde_json::Value =
-        serde_json::from_str(&std::fs::read_to_string(fixture.path.join("pkg/package.json")).unwrap()).unwrap();
+    let pkg_json: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(fixture.path.join("pkg/package.json")).unwrap(),
+    )
+    .unwrap();
     assert_eq!(pkg_json["main"], "em_hello_world.mjs");
     assert_eq!(pkg_json["type"], "module");
     assert_eq!(pkg_json["types"], "em_hello_world.d.ts");
     let files = pkg_json["files"].as_array().unwrap();
     let names: Vec<&str> = files.iter().map(|v| v.as_str().unwrap()).collect();
-    assert!(names.contains(&"em_hello_world.mjs"), "expected .mjs in files: {names:?}");
-    assert!(names.contains(&"em_hello_world.wasm"), "expected .wasm in files: {names:?}");
     assert!(
-        !names.iter().any(|n| n.ends_with("_bg.wasm") || n.ends_with("_bg.js")),
+        names.contains(&"em_hello_world.mjs"),
+        "expected .mjs in files: {names:?}"
+    );
+    assert!(
+        names.contains(&"em_hello_world.wasm"),
+        "expected .wasm in files: {names:?}"
+    );
+    assert!(
+        !names
+            .iter()
+            .any(|n| n.ends_with("_bg.wasm") || n.ends_with("_bg.js")),
         "emscripten pkg should not list `_bg.*` artifacts: {names:?}"
     );
 }

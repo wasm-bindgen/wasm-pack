@@ -149,7 +149,13 @@ fn it_creates_a_package_json_provided_path_with_scope() {
     let crate_data = manifest::CrateData::new(&fixture.path, None).unwrap();
     wasm_pack::command::utils::create_pkg_dir(&out_dir).unwrap();
     assert!(crate_data
-        .write_package_json(&out_dir, &Some("test".to_string()), false, Target::Bundler, false)
+        .write_package_json(
+            &out_dir,
+            &Some("test".to_string()),
+            false,
+            Target::Bundler,
+            false
+        )
         .is_ok());
     let package_json_path = &fixture.path.join("pkg").join("package.json");
     fs::metadata(package_json_path).unwrap();
