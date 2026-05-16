@@ -1,0 +1,19 @@
+# Make `cargo build` (and `wasm-pack build`) target emscripten by default.
+# Override with `--target` on the command line if needed.
+[build]
+target = "wasm32-unknown-emscripten"
+
+# Compile-time settings the emscripten target needs to produce a clean
+# staticlib for emcc to link:
+#   * panic=abort — emcc + wasm-bindgen don't currently support panic=unwind
+#     across the FFI boundary. Override at your own risk.
+#   * relocation-model=static — the staticlib is linked directly into the
+#     final wasm by emcc's wasm-ld step; PIC isn't needed.
+#   * enable-emscripten-cxx-exceptions=0 — disables LLVM's emscripten-style
+#     C++ exception lowering, which would require a runtime we don't ship.
+[target.wasm32-unknown-emscripten]
+rustflags = [
+    "-Cllvm-args=-enable-emscripten-cxx-exceptions=0",
+    "-Cpanic=abort",
+    "-Crelocation-model=static",
+]

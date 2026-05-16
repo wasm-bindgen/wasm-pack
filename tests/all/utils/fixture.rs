@@ -449,6 +449,162 @@ pub fn js_hello_world() -> Fixture {
     fixture
 }
 
+/// Fixture targeting wasm32-unknown-emscripten with a broad #[wasm_bindgen]
+/// surface — each export exercises a distinct codegen path so a regression
+/// in any one of them is caught:
+///   - `rs_add`           — primitive args/returns (baseline)
+///   - `rs_greet`         — string passing / cachedTextEncoder / $heap
+///   - `rs_make_adder`    — closure construction / CLOSURE_DTORS / externref
+///   - `rs_sum`           — typed slice → HEAPF64 / HEAP_DATA_VIEW
+///   - `rs_xor`           — byte slice → HEAPU8
+///   - `rs_divide`        — Result<T, JsError> error propagation
+///   - `Counter`          — class with constructor + method + getter
+///   - `rs_double_via_js` — Rust calling out to a JS-provided import
+///
+/// Crate config:
+///   - `crate-type = ["staticlib"]` (emcc consumes the .a)
+///   - `.cargo/config.toml` selects the emscripten target so the user
+///     doesn't need to pass `-- --target wasm32-unknown-emscripten`
+pub fn emscripten_hello_world() -> Fixture {
+    let fixture = Fixture::new();
+
+    // wasm-bindgen's CLI and macro share a version-locked binary protocol, and
+    // the fixes required for emscripten output mode aren't on a stable release
+    // yet. Pin the fixture at the `emscripten-output-fixes` branch via
+    // `[patch.crates-io]` so the local crate, wasm-bindgen CLI, and CI all
+    // agree on the same descriptor format.
+    //
+    // TODO: once these fixes land in a published wasm-bindgen release, drop
+    // this `[patch.crates-io]` block entirely and bump the `wasm-bindgen`
+    // and `js-sys` versions below to the release that contains them.
+    const WASM_BINDGEN_BRANCH: &str = "emscripten-output-fixes";
+    const WASM_BINDGEN_REPO: &str = "https://github.com/wasm-bindgen/wasm-bindgen";
+    let patch_section = format!(
+        "\n\n[patch.crates-io]\n\
+         wasm-bindgen = {{ git = \"{WASM_BINDGEN_REPO}\", branch = \"{WASM_BINDGEN_BRANCH}\" }}\n\
+         wasm-bindgen-macro = {{ git = \"{WASM_BINDGEN_REPO}\", branch = \"{WASM_BINDGEN_BRANCH}\" }}\n\
+         wasm-bindgen-macro-support = {{ git = \"{WASM_BINDGEN_REPO}\", branch = \"{WASM_BINDGEN_BRANCH}\" }}\n\
+         wasm-bindgen-shared = {{ git = \"{WASM_BINDGEN_REPO}\", branch = \"{WASM_BINDGEN_BRANCH}\" }}\n\
+         js-sys = {{ git = \"{WASM_BINDGEN_REPO}\", branch = \"{WASM_BINDGEN_BRANCH}\" }}\n"
+    );
+
+    let cargo_toml = format!(
+        r#"[package]
+authors = ["The wasm-pack developers"]
+description = "emscripten + wasm-bindgen integration test"
+license = "WTFPL"
+name = "em-hello-world"
+repository = "https://github.com/wasm-bindgen/wasm-pack.git"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+{patch_section}"#
+    );
+
+    fixture
+        .readme()
+        .file("Cargo.toml", cargo_toml)
+        .file(
+            ".cargo/config.toml",
+            r#"
+[build]
+target = "wasm32-unknown-emscripten"
+
+[target.wasm32-unknown-emscripten]
+rustflags = [
+    "-Cllvm-args=-enable-emscripten-cxx-exceptions=0",
+    "-Cpanic=abort",
+    "-Crelocation-model=static",
+]
+            "#,
+        )
+        .file(
+            "src/lib.rs",
+            r#"
+use js_sys::Function;
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn rs_add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+#[wasm_bindgen]
+pub fn rs_greet(name: &str) -> String {
+    format!("hello, {name}!")
+}
+
+#[wasm_bindgen]
+pub fn rs_make_adder(n: i32) -> Function {
+    let f = Closure::<dyn Fn(i32) -> i32>::new(move |x| x + n);
+    let ret = f.as_ref().unchecked_ref::<Function>().clone();
+    f.forget();
+    ret
+}
+
+#[wasm_bindgen]
+pub fn rs_sum(values: &[f64]) -> f64 {
+    values.iter().sum()
+}
+
+#[wasm_bindgen]
+pub fn rs_xor(bytes: &[u8]) -> u8 {
+    bytes.iter().fold(0u8, |acc, &b| acc ^ b)
+}
+
+#[wasm_bindgen]
+pub fn rs_divide(num: i32, den: i32) -> Result<i32, JsError> {
+    if den == 0 {
+        Err(JsError::new("division by zero"))
+    } else {
+        Ok(num / den)
+    }
+}
+
+#[wasm_bindgen]
+pub struct Counter {
+    value: i32,
+}
+
+#[wasm_bindgen]
+impl Counter {
+    #[wasm_bindgen(constructor)]
+    pub fn new(initial: i32) -> Counter {
+        Counter { value: initial }
+    }
+
+    pub fn increment(&mut self, by: i32) -> i32 {
+        self.value += by;
+        self.value
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn value(&self) -> i32 {
+        self.value
+    }
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rs_test_doubler)]
+    fn js_doubler(n: i32) -> i32;
+}
+
+#[wasm_bindgen]
+pub fn rs_double_via_js(n: i32) -> i32 {
+    js_doubler(n)
+}
+            "#,
+        );
+    fixture
+}
+
 pub fn js_hello_world_with_custom_profile(profile_name: &str) -> Fixture {
     let fixture = Fixture::new();
     fixture

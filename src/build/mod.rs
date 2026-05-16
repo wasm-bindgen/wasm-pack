@@ -201,6 +201,116 @@ pub fn cargo_build_wasm(
     }
 }
 
+/// `cargo build --lib` variant that expects a staticlib (`.a`) artifact.
+///
+/// Used by the `wasm32-*-emscripten` pipeline: cargo produces a static
+/// library which is then linked by emcc in a subsequent step. This is
+/// otherwise identical to `cargo_build_wasm` — same flags, same profile
+/// handling — but locates the `.a` filename in the artifact JSON instead
+/// of `.wasm`.
+pub fn cargo_build_staticlib(
+    path: &Path,
+    profile: BuildProfile,
+    extra_options: &[String],
+    target_triple: &str,
+    panic_unwind: bool,
+) -> Result<String> {
+    let msg = format!("{}Compiling to staticlib...", emoji::CYCLONE);
+    PBAR.info(&msg);
+
+    let mut cmd = Command::new("cargo");
+    cmd.current_dir(path);
+    if panic_unwind {
+        cmd.arg("+nightly");
+    }
+    cmd.arg("build").arg("--lib");
+
+    if PBAR.quiet() {
+        cmd.arg("--quiet");
+    }
+
+    match profile {
+        BuildProfile::Profiling | BuildProfile::Release => {
+            cmd.arg("--release");
+        }
+        BuildProfile::Dev => {}
+        BuildProfile::Custom(arg) => {
+            cmd.arg("--profile").arg(arg);
+        }
+    }
+
+    cmd.env("CARGO_BUILD_TARGET", target_triple);
+
+    if panic_unwind {
+        cmd.arg("-Z").arg("build-std=std,panic_unwind");
+        let existing = std::env::var("RUSTFLAGS").unwrap_or_default();
+        let combined = if existing.is_empty() {
+            "-Cpanic=unwind".to_string()
+        } else {
+            format!("{existing} -Cpanic=unwind")
+        };
+        cmd.env("RUSTFLAGS", combined);
+    }
+
+    // Same relative→absolute path normalization as `cargo_build_wasm`.
+    let mut handle_path = false;
+    let extra_options_with_absolute_paths = extra_options
+        .iter()
+        .map(|option| -> Result<String> {
+            let value = if handle_path && Path::new(option).is_relative() {
+                std::env::current_dir()?
+                    .join(option)
+                    .to_str()
+                    .ok_or_else(|| anyhow!("path contains non-UTF-8 characters"))?
+                    .to_string()
+            } else {
+                option.to_string()
+            };
+            handle_path = matches!(&**option, "--target-dir" | "--out-dir" | "--manifest-path");
+            Ok(value)
+        })
+        .collect::<Result<Vec<_>>>()?;
+    cmd.args(extra_options_with_absolute_paths);
+    cmd.arg("--message-format=json");
+
+    let mut cargo_process = cmd.stdout(Stdio::piped()).spawn()?;
+    let final_artifact =
+        Message::parse_stream(BufReader::new(cargo_process.stdout.as_mut().unwrap()))
+            .filter_map(|msg| {
+                match msg {
+                    Ok(Message::CompilerArtifact(artifact)) => return Some(artifact),
+                    Ok(Message::CompilerMessage(msg)) => eprintln!("{msg}"),
+                    Ok(Message::TextLine(text)) => eprintln!("{text}"),
+                    Err(err) => log::error!("Couldn't parse cargo message: {err}"),
+                    _ => {}
+                }
+                None
+            })
+            .last();
+
+    if !cargo_process
+        .wait()
+        .context("Failed to wait for cargo build process")?
+        .success()
+    {
+        bail!("`cargo build` failed, see the output above for details");
+    }
+
+    let lib_files: Vec<_> = final_artifact
+        .context("Expected at least one compiler artifact in the output of `cargo build`")?
+        .filenames
+        .into_iter()
+        .filter(|p| p.extension() == Some("a"))
+        .collect();
+
+    match <[_; 1]>::try_from(lib_files) {
+        Ok([filename]) => Ok(filename.into_string()),
+        Err(filenames) => bail!(
+            "Expected exactly one .a file from `cargo build` for the emscripten target, found {filenames:?}"
+        ),
+    }
+}
+
 /// Runs `cargo build --tests` targeting `wasm32-unknown-unknown`.
 ///
 /// This generates the `Cargo.lock` file that we use in order to know which version of

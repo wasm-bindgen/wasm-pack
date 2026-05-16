@@ -51,6 +51,11 @@ pub enum Command {
             default_value = crate::generate::DEFAULT_TEMPLATE
         )]
         template: String,
+        /// Scaffold a project targeting wasm32-unknown-emscripten instead
+        /// of the default wasm32-unknown-unknown. Implies a staticlib +
+        /// emcc pipeline. Requires emsdk on PATH.
+        #[clap(long = "emscripten", conflicts_with = "template")]
+        emscripten: bool,
         #[clap(long = "mode", short = 'm', default_value = "normal")]
         /// Should we install or check the presence of binary tools. [possible values: no-install, normal, force]
         mode: InstallMode,
@@ -60,7 +65,7 @@ pub enum Command {
     /// 🎆  pack up your npm package and publish!
     Publish {
         #[clap(long = "target", short = 't', default_value = "bundler")]
-        /// Sets the target environment. [possible values: bundler, nodejs, web, no-modules]
+        /// Sets the target environment. [possible values: bundler, nodejs, web, no-modules, deno, module]
         target: String,
 
         /// The access level for the package to be published
@@ -132,12 +137,22 @@ pub fn run_wasm_pack(command: Command) -> Result<()> {
         Command::Generate {
             template,
             name,
+            emscripten,
             mode,
         } => {
             info!("Running generate command...");
-            info!("Template: {:?}", &template);
             info!("Name: {:?}", &name);
-            generate(template, name, mode.install_permitted())
+            // `--emscripten` is shorthand for selecting the in-tree emscripten
+            // template subdirectory from the default wasm-pack repo. Users
+            // who pass `--template` keep full control; clap rejects the
+            // combination via `conflicts_with`.
+            let template = if emscripten {
+                crate::generate::EMSCRIPTEN_TEMPLATE.to_owned()
+            } else {
+                template
+            };
+            info!("Template: {:?}", &template);
+            generate(template, name, emscripten, mode.install_permitted())
         }
         Command::Publish {
             target,

@@ -148,15 +148,22 @@ impl Test {
         let crate_data = manifest::CrateData::new(&crate_path, None)?;
         let any_browser = chrome || firefox || safari;
 
+        // Same target-resolution precedence as `wasm-pack build`:
+        //   1. `--target` in extra options after `--`
+        //   2. CARGO_BUILD_TARGET env var
+        //   3. `[build] target = "..."` in the crate's .cargo/config.toml
+        //   4. fallback to wasm32-unknown-unknown
         let target_triple = {
             let mut iter = extra_options.iter();
-            if iter.by_ref().any(|option| option == "--target") {
-                iter.next().map(|s| s.as_str())
-            } else {
-                None
-            }
-            .unwrap_or("wasm32-unknown-unknown")
-            .to_owned()
+            let from_args = iter
+                .by_ref()
+                .find(|o| o.as_str() == "--target")
+                .and_then(|_| iter.next())
+                .cloned();
+            from_args
+                .or_else(|| std::env::var("CARGO_BUILD_TARGET").ok())
+                .or_else(|| crate::command::build::read_cargo_build_target(&crate_path))
+                .unwrap_or_else(|| "wasm32-unknown-unknown".to_string())
         };
 
         if !node && !any_browser {
@@ -198,6 +205,21 @@ impl Test {
 
     /// Execute this test command.
     pub fn run(mut self) -> Result<()> {
+        // `wasm-pack test` runs `#[wasm_bindgen_test]` cases via
+        // `wasm-bindgen-test-runner`, which expects a wasm-bindgen-compiled
+        // wasm binary. The emscripten target produces a fundamentally
+        // different artifact (a staticlib linked through emcc), so the
+        // runner can't drive it. Fail fast with a clear message until a
+        // dedicated emscripten test runner is available.
+        if self.target_triple.ends_with("-emscripten") {
+            bail!(
+                "`wasm-pack test` does not currently support the {} target. \
+                 Run your tests with `cargo test` directly, or target \
+                 wasm32-unknown-unknown for `wasm-pack test`.",
+                self.target_triple,
+            );
+        }
+
         let process_steps = self.get_process_steps();
 
         let started = Instant::now();
