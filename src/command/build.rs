@@ -31,6 +31,7 @@ pub struct Build {
     pub disable_dts: bool,
     pub weak_refs: bool,
     pub reference_types: bool,
+    pub browser_only: bool,
     pub target: Target,
     pub no_pack: bool,
     pub no_opt: bool,
@@ -144,6 +145,11 @@ pub struct BuildOptions {
     /// Enable usage of WebAssembly reference types.
     pub reference_types: bool,
 
+    #[clap(long = "browser")]
+    /// Hint that the generated JS should only be compatible with a browser.
+    /// Only supported when using the 'bundler' target.
+    pub browser_only: bool,
+
     #[clap(long = "target", short = 't', default_value = "bundler")]
     /// Sets the target environment. [possible values: bundler, nodejs, web, no-modules, deno]
     pub target: Target,
@@ -207,6 +213,7 @@ impl Default for BuildOptions {
             disable_dts: false,
             weak_refs: false,
             reference_types: false,
+            browser_only: false,
             target: Target::default(),
             debug: false,
             dev: false,
@@ -278,6 +285,7 @@ impl Build {
             disable_dts: build_opts.disable_dts,
             weak_refs: build_opts.weak_refs,
             reference_types: build_opts.reference_types,
+            browser_only: build_opts.browser_only,
             target: build_opts.target,
             no_pack: build_opts.no_pack,
             no_opt: build_opts.no_opt,
@@ -485,6 +493,7 @@ impl Build {
             self.disable_dts,
             self.weak_refs,
             self.reference_types,
+            self.browser_only,
             self.target,
             self.profile.clone(),
         )?;
