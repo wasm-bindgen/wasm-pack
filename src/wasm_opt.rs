@@ -18,7 +18,10 @@ pub fn run(cache: &Cache, out_dir: &Path, args: &[String], install_permitted: bo
         None => return Ok(()),
     };
 
-    PBAR.info("Optimizing wasm binaries with `wasm-opt`...");
+    PBAR.info(&format!(
+        "Optimizing wasm binaries with `wasm-opt@{version}`...",
+        version = install::WASM_OPT_VERSION
+    ));
 
     for file in out_dir.read_dir()? {
         let file = file?;

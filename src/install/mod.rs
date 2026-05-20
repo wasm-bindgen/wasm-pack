@@ -25,6 +25,13 @@ pub use self::mode::InstallMode;
 pub use self::os::Os;
 pub use self::tool::Tool;
 
+/// The version of wasm-opt that will be downloaded and used for optimizing the wasm output.
+///
+/// E.g. `version_122`
+///
+// Make sure to update the version in docs/src/cargo-toml-configuration.md as well
+pub const WASM_OPT_VERSION: u32 = 117;
+
 /// Possible outcomes of attempting to find/install a tool
 pub enum Status {
     /// Couldn't install tool because downloads are forbidden by user
@@ -202,9 +209,9 @@ pub fn prebuilt_url_for(tool: &Tool, version: &str, arch: &Arch, os: &Os) -> Res
             ))
         },
         Tool::WasmOpt => {
+            let version = format!("version_{}", WASM_OPT_VERSION);
             Ok(format!(
-        "https://github.com/WebAssembly/binaryen/releases/download/{vers}/binaryen-{vers}-{target}.tar.gz",
-        vers = "version_117", // Make sure to update the version in docs/src/cargo-toml-configuration.md as well
+        "https://github.com/WebAssembly/binaryen/releases/download/{version}/binaryen-{version}-{target}.tar.gz",
         target = target,
             ))
         }
