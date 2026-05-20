@@ -4,6 +4,7 @@ use wasm_pack::install::{self, Arch, Os, Tool};
 #[cfg(any(
     all(target_os = "linux", target_arch = "x86_64"),
     all(target_os = "macos", target_arch = "x86_64"),
+    all(target_os = "macos", target_arch = "aarch64"),
     all(windows, target_arch = "x86_64"),
 ))]
 fn can_download_prebuilt_wasm_bindgen() {

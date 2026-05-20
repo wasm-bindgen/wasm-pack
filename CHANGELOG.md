@@ -2,6 +2,15 @@
 
 ## 🤍 Unreleased
 
+- ### 🤕 Fixes
+
+  - **Use prebuilt wasm-bindgen binary on macOS aarch64 - [guybedford], [pull/1585]**
+
+    Previously wasm-pack built `wasm-bindgen-cli` from source on Apple Silicon. The
+    prebuilt `aarch64-apple-darwin` release is now used directly.
+
+    [pull/1585]: https://github.com/wasm-bindgen/wasm-pack/pull/1585
+
 ## 🌷 0.15.0
 
 - ### ✨ Features
