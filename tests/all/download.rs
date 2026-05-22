@@ -75,6 +75,25 @@ fn can_download_prebuilt_wasm_opt() {
 }
 
 #[test]
+fn wasm_opt_prebuilt_url_is_pinned_version() {
+    // Ensure the bundled binaryen version is recent enough to handle
+    // 64-bit tables (added in v118). See
+    // https://github.com/wasm-bindgen/wasm-pack/issues/1576.
+    let url =
+        install::prebuilt_url_for(&Tool::WasmOpt, "latest", &Arch::X86_64, &Os::Linux).unwrap();
+    let version = url
+        .split('/')
+        .find(|segment| segment.starts_with("version_"))
+        .and_then(|s| s.trim_start_matches("version_").parse::<u32>().ok())
+        .expect("binaryen prebuilt URL must contain a version_NNN tag");
+    assert!(
+        version >= 118,
+        "bundled binaryen must be >= 118 for wasm64 support, got version_{}",
+        version
+    );
+}
+
+#[test]
 fn all_latest_tool_download_urls_valid() {
     let mut errors = Vec::new();
 

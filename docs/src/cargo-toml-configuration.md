@@ -21,7 +21,7 @@ The available configuration options and their default values are shown below:
 #
 # In most cases, the `-O[X]` flag is enough. However, if you require extreme
 # optimizations, see the full list of `wasm-opt` optimization flags
-# https://github.com/WebAssembly/binaryen/blob/version_117/test/lit/help/wasm-opt.test
+# https://github.com/WebAssembly/binaryen/blob/version_129/test/lit/help/wasm-opt.test
 wasm-opt = ['-O']
 
 [package.metadata.wasm-pack.profile.dev.wasm-bindgen]

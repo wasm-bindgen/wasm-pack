@@ -174,6 +174,68 @@ See [Non-`rustup` setups][non-rustup].
 
 `--panic-unwind` is also available for [`wasm-pack test`](./test.md).
 
+## 64-bit WebAssembly (`wasm64-unknown-unknown`)
+
+The cargo target triple is the source of truth for which WebAssembly ABI
+`wasm-pack` builds. To produce a `memory64` binary, declare the target the
+cargo-native way — either in `.cargo/config.toml`:
+
+```toml
+# .cargo/config.toml
+[build]
+target = "wasm64-unknown-unknown"
+```
+
+or as an extra cargo argument:
+
+```
+wasm-pack build -- --target wasm64-unknown-unknown
+```
+
+or via `CARGO_BUILD_TARGET=wasm64-unknown-unknown` in the environment.
+
+`wasm64-unknown-unknown` is a [tier-3 Rust target][tier-3], so `rustup`
+has no prebuilt artifacts for it. You need to provide two pieces yourself
+via cargo's native config:
+
+1. **A nightly toolchain** — `rust-toolchain.toml` is the cargo-native
+   way to pin one to your project:
+
+   ```toml
+   # rust-toolchain.toml
+   [toolchain]
+   channel = "nightly"
+   components = ["rust-src"]
+   ```
+
+   Or set `RUSTUP_TOOLCHAIN=nightly` for one-off invocations.
+
+2. **`-Z build-std` to build `std` from source**, since there is no
+   prebuilt one. Add to your `.cargo/config.toml`:
+
+   ```toml
+   [unstable]
+   build-std = ["std", "panic_abort"]
+   ```
+
+   Or pass `-Z build-std=std,panic_abort` as an extra cargo argument.
+
+`wasm-pack` itself stays out of the cargo invocation — it does not inject
+`+nightly` or `-Z build-std` (those would override your toolchain pin or
+surprise users who hadn't intended a nightly build). What it does do when
+it sees a `wasm64-*` triple:
+
+- Verifies the active toolchain is nightly, with a helpful error pointing
+  at the config above if it isn't.
+- Installs the `rust-src` component for the active toolchain via `rustup`
+  if missing.
+- Does **not** attempt `rustup target add wasm64-*` (which would always
+  fail for a tier-3 target).
+- Passes `--enable-memory64` to `wasm-opt` so the optimiser accepts
+  64-bit memories and tables.
+
+[tier-3]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+
 [wbg-catch-unwind]: https://wasm-bindgen.github.io/wasm-bindgen/reference/catch-unwind.html
 [non-rustup]: ../prerequisites/non-rustup-setups.md
 

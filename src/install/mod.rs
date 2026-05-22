@@ -204,7 +204,7 @@ pub fn prebuilt_url_for(tool: &Tool, version: &str, arch: &Arch, os: &Os) -> Res
         Tool::WasmOpt => {
             Ok(format!(
         "https://github.com/WebAssembly/binaryen/releases/download/{vers}/binaryen-{vers}-{target}.tar.gz",
-        vers = "version_117", // Make sure to update the version in docs/src/cargo-toml-configuration.md as well
+        vers = "version_129", // Make sure to update the version in docs/src/cargo-toml-configuration.md as well
         target = target,
             ))
         }

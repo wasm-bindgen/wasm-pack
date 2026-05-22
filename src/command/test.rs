@@ -148,15 +148,19 @@ impl Test {
         let crate_data = manifest::CrateData::new(&crate_path, None)?;
         let any_browser = chrome || firefox || safari;
 
+        // Same precedence cargo uses, so wasm-pack and cargo agree on the
+        // target. See `command::build::read_cargo_build_target`.
         let target_triple = {
             let mut iter = extra_options.iter();
-            if iter.by_ref().any(|option| option == "--target") {
-                iter.next().map(|s| s.as_str())
-            } else {
-                None
-            }
-            .unwrap_or("wasm32-unknown-unknown")
-            .to_owned()
+            let from_args = iter
+                .by_ref()
+                .find(|o| o.as_str() == "--target")
+                .and_then(|_| iter.next())
+                .cloned();
+            from_args
+                .or_else(|| std::env::var("CARGO_BUILD_TARGET").ok())
+                .or_else(|| crate::command::build::read_cargo_build_target(&crate_path))
+                .unwrap_or_else(|| "wasm32-unknown-unknown".to_string())
         };
 
         if !node && !any_browser {

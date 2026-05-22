@@ -56,12 +56,84 @@ pub fn check_for_wasm_target(target: &str) -> Result<()> {
     let msg = format!("{}Checking for the Wasm target...", emoji::TARGET);
     PBAR.info(&msg);
 
+    // Tier-3 wasm targets (`wasm64-unknown-unknown`) have no rustup-prebuilt
+    // sysroot — they are built from source via `-Z build-std`, which requires
+    // a nightly toolchain and the `rust-src` component. wasm-pack doesn't
+    // inject `+nightly` or `-Z build-std` itself (those would override the
+    // user's `rust-toolchain.toml` or surprise users who hadn't intended a
+    // nightly build); instead we verify the active toolchain is nightly,
+    // heal the `rust-src` component if missing, and let cargo run.
+    if crate::build::is_tier3_wasm(target) {
+        return check_tier3_wasm_prerequisites(target);
+    }
+
     // Check if wasm32 target is present, otherwise bail.
     match check_target(target) {
         Ok(ref wasm32_check) if wasm32_check.found => Ok(()),
         Ok(wasm32_check) => bail!("{}", wasm32_check),
         Err(err) => Err(err),
     }
+}
+
+/// Tier-3 (currently `wasm64-*`) prerequisites: nightly active toolchain +
+/// `rust-src` component. Does not inject any cargo flags.
+fn check_tier3_wasm_prerequisites(target: &str) -> Result<()> {
+    if !is_active_toolchain_nightly()? {
+        bail!(
+            "`{target}` is a tier-3 Rust target and requires the nightly \
+             toolchain (rustup has no prebuilt artifacts for it).\n\n\
+             Pin nightly for this project by adding a `rust-toolchain.toml`:\n\n\
+                 [toolchain]\n\
+                 channel = \"nightly\"\n\
+                 components = [\"rust-src\"]\n\n\
+             Or set `RUSTUP_TOOLCHAIN=nightly` for a one-off invocation.\n\n\
+             You also need cargo to build `std` from source. Add to your \
+             `.cargo/config.toml`:\n\n\
+                 [unstable]\n\
+                 build-std = [\"std\", \"panic_abort\"]\n\n\
+             Or pass `-Z build-std=std,panic_abort` as an extra cargo argument."
+        );
+    }
+
+    if !has_rust_src_component_for_active_toolchain()? {
+        install_rust_src_for_active_toolchain()?;
+    }
+
+    Ok(())
+}
+
+/// Returns true if the currently-active rustc resolves to a nightly channel.
+fn is_active_toolchain_nightly() -> Result<bool> {
+    let output = Command::new("rustc").arg("--version").output()?;
+    if !output.status.success() {
+        bail!("`rustc --version` failed: {}", output.status);
+    }
+    let stdout = String::from_utf8(output.stdout)?;
+    // `rustc --version` prints e.g. `rustc 1.79.0-nightly (abc123 2024-04-01)`.
+    Ok(stdout.contains("-nightly") || stdout.contains("-dev"))
+}
+
+fn has_rust_src_component_for_active_toolchain() -> Result<bool> {
+    let output = Command::new("rustup")
+        .args(["component", "list", "--installed"])
+        .output()?;
+    if !output.status.success() {
+        return Ok(false);
+    }
+    let stdout = String::from_utf8(output.stdout)?;
+    Ok(stdout.lines().any(|line| line.starts_with("rust-src")))
+}
+
+fn install_rust_src_for_active_toolchain() -> Result<()> {
+    let msg = format!(
+        "{}Installing rust-src component for the active toolchain...",
+        emoji::TARGET
+    );
+    PBAR.info(&msg);
+    let mut cmd = Command::new("rustup");
+    cmd.arg("component").arg("add").arg("rust-src");
+    child::run(cmd, "rustup").context("Adding the rust-src component with rustup")?;
+    Ok(())
 }
 
 /// Get rustc's sysroot as a PathBuf

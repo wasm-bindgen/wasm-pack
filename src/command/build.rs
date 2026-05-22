@@ -258,17 +258,24 @@ impl Build {
 
         let extra_options = build_opts.extra_options;
 
+        // Resolve the cargo target triple in the same precedence order cargo
+        // uses, so wasm-pack and cargo always agree on what's being built:
+        //   1. `--target` in extra cargo arguments (after `--`)
+        //   2. `CARGO_BUILD_TARGET` env var
+        //   3. `[build] target = "..."` in `.cargo/config.toml` (walking up
+        //      from the crate dir, then `$CARGO_HOME/config.toml`)
+        //   4. fallback to `wasm32-unknown-unknown`
         let target_triple = {
-            let mut extra_options_iter = extra_options.iter();
-            if extra_options_iter
+            let mut iter = extra_options.iter();
+            let from_args = iter
                 .by_ref()
-                .any(|option| option == "--target")
-            {
-                extra_options_iter.next().map(|s| s.as_str())
-            } else {
-                None
-            }
-            .unwrap_or("wasm32-unknown-unknown")
+                .find(|o| o.as_str() == "--target")
+                .and_then(|_| iter.next())
+                .cloned();
+            from_args
+                .or_else(|| std::env::var("CARGO_BUILD_TARGET").ok())
+                .or_else(|| read_cargo_build_target(&crate_path))
+                .unwrap_or_else(|| "wasm32-unknown-unknown".to_string())
         };
 
         Ok(Build {
@@ -287,7 +294,7 @@ impl Build {
             out_name: build_opts.out_name,
             bindgen: None,
             cache: cache::get_wasm_pack_cache()?,
-            target_triple: target_triple.to_owned(),
+            target_triple,
             extra_options,
             panic_unwind: build_opts.panic_unwind,
             wasm_path: None,
@@ -504,7 +511,7 @@ impl Build {
         if self.reference_types {
             args.push("--enable-reference-types".into());
         }
-        if self.target_triple.starts_with("wasm64") {
+        if build::is_tier3_wasm(&self.target_triple) {
             args.push("--enable-memory64".into());
         }
         info!("executing wasm-opt with {:?}", args);
@@ -518,5 +525,98 @@ impl Build {
                 "{}\nTo disable `wasm-opt`, add `wasm-opt = false` to your package metadata in your `Cargo.toml`.", e
             )
         })
+    }
+}
+
+/// Read the cargo `[build] target` setting from `.cargo/config.toml`.
+///
+/// Mirrors cargo's own discovery: walk up from `crate_path` checking
+/// `.cargo/config.toml` at each ancestor (workspace-aware) and finally
+/// check `$CARGO_HOME/config.toml` for user-level defaults. The first
+/// file that declares `[build] target = "..."` wins.
+pub(crate) fn read_cargo_build_target(crate_path: &std::path::Path) -> Option<String> {
+    for dir in crate_path.ancestors() {
+        if let Some(target) = parse_build_target(&dir.join(".cargo/config.toml")) {
+            return Some(target);
+        }
+    }
+    // Cargo falls back to $CARGO_HOME/config.toml (default ~/.cargo/config.toml)
+    // for user-wide settings. Honour the same precedence.
+    let cargo_home = std::env::var_os("CARGO_HOME")
+        .map(std::path::PathBuf::from)
+        .or_else(|| dirs::home_dir().map(|h| h.join(".cargo")))?;
+    parse_build_target(&cargo_home.join("config.toml"))
+}
+
+/// Parse `[build] target = "..."` from a single config file, if it
+/// exists and is well-formed. Returns `None` for missing files or
+/// configs that don't declare a target.
+fn parse_build_target(path: &std::path::Path) -> Option<String> {
+    let cfg = std::fs::read_to_string(path).ok()?;
+    let parsed: toml::Value = toml::from_str(&cfg).ok()?;
+    parsed
+        .get("build")?
+        .get("target")?
+        .as_str()
+        .map(str::to_owned)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_cargo_build_target_walks_up_to_workspace_root() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        // Workspace root holds the .cargo/config.toml.
+        std::fs::create_dir_all(root.join(".cargo")).unwrap();
+        std::fs::write(
+            root.join(".cargo/config.toml"),
+            "[build]\ntarget = \"wasm64-unknown-unknown\"\n",
+        )
+        .unwrap();
+        // Crate lives two levels deeper with no config of its own.
+        let crate_path = root.join("crates/foo");
+        std::fs::create_dir_all(&crate_path).unwrap();
+
+        assert_eq!(
+            read_cargo_build_target(&crate_path),
+            Some("wasm64-unknown-unknown".to_string())
+        );
+    }
+
+    #[test]
+    fn read_cargo_build_target_prefers_crate_over_workspace() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path();
+        std::fs::create_dir_all(root.join(".cargo")).unwrap();
+        std::fs::write(
+            root.join(".cargo/config.toml"),
+            "[build]\ntarget = \"wasm32-unknown-unknown\"\n",
+        )
+        .unwrap();
+        let crate_path = root.join("crates/foo");
+        std::fs::create_dir_all(crate_path.join(".cargo")).unwrap();
+        std::fs::write(
+            crate_path.join(".cargo/config.toml"),
+            "[build]\ntarget = \"wasm64-unknown-unknown\"\n",
+        )
+        .unwrap();
+
+        // Crate-level config should win.
+        assert_eq!(
+            read_cargo_build_target(&crate_path),
+            Some("wasm64-unknown-unknown".to_string())
+        );
+    }
+
+    #[test]
+    fn read_cargo_build_target_missing_returns_none() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        // Use a deliberately-unreachable CARGO_HOME so the test is hermetic
+        // (otherwise it would race with developer state).
+        std::env::set_var("CARGO_HOME", tmp.path().join("nonexistent"));
+        assert_eq!(read_cargo_build_target(tmp.path()), None);
     }
 }

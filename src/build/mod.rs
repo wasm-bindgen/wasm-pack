@@ -74,6 +74,13 @@ fn wasm_pack_local_version() -> Option<String> {
     Some(output.to_string())
 }
 
+/// Returns true for tier-3 wasm targets that have no rustup-prebuilt sysroot
+/// and must be built via `-Z build-std`. Currently this is the wasm64 family
+/// (`wasm64-unknown-unknown`, future `wasm64-*` variants).
+pub fn is_tier3_wasm(target_triple: &str) -> bool {
+    target_triple.starts_with("wasm64")
+}
+
 /// Run `cargo build` for Wasm with config derived from the given `BuildProfile`.
 pub fn cargo_build_wasm(
     path: &Path,
@@ -259,4 +266,19 @@ pub fn cargo_build_wasm_tests(
 
     child::run(cmd, "cargo build").context("Compilation of your program failed")?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tier3_wasm_detection() {
+        assert!(is_tier3_wasm("wasm64-unknown-unknown"));
+        assert!(is_tier3_wasm("wasm64-wasi"));
+        assert!(!is_tier3_wasm("wasm32-unknown-unknown"));
+        assert!(!is_tier3_wasm("wasm32-wasi"));
+        assert!(!is_tier3_wasm("wasm32-unknown-emscripten"));
+        assert!(!is_tier3_wasm("x86_64-unknown-linux-gnu"));
+    }
 }
