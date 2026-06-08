@@ -243,7 +243,7 @@ pub fn cargo_install(
 
     // Run `cargo install` to a temporary location to handle ctrl-c gracefully
     // and ensure we don't accidentally use stale files in the future
-    let tmp = cache.join(format!(".{}", dirname).as_ref());
+    let tmp = cache.join(format!(".{}-pid{}", dirname, std::process::id(),).as_ref());
     drop(fs::remove_dir_all(&tmp));
     debug!("cargo installing {} to tempdir: {}", tool, tmp.display(),);
 
