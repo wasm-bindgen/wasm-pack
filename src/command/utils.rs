@@ -36,10 +36,12 @@ fn find_manifest_from_cwd() -> Result<PathBuf> {
 }
 
 /// Construct our `pkg` directory in the crate.
-pub fn create_pkg_dir(out_dir: &Path) -> Result<()> {
+pub fn create_pkg_dir(out_dir: &Path, no_gitignore: bool) -> Result<()> {
     let _ = fs::remove_file(out_dir.join("package.json")); // Clean up package.json from previous runs
     fs::create_dir_all(&out_dir)?;
-    fs::write(out_dir.join(".gitignore"), "*")?;
+    if !no_gitignore {
+        fs::write(out_dir.join(".gitignore"), "*")?;
+    }
     Ok(())
 }
 

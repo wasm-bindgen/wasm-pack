@@ -7,7 +7,8 @@ wasm binary, a JS wrapper file, your `README`, and a `package.json` file.
 
 The `pkg` directory is automatically `.gitignore`d by default, since it contains
 build artifacts which are not intended to be checked into version
-control.<sup>[0](#footnote-0)</sup>
+control.<sup>[0](#footnote-0)</sup> You can disable this with the
+[`--no-gitignore` flag](#skip-gitignore).
 
 ## Path
 
@@ -138,6 +139,20 @@ example, to build the previous example using cargo's offline feature:
 wasm-pack build examples/js-hello-world --mode no-install -- --offline
 ```
 
+## Skip .gitignore
+
+By default, `wasm-pack` creates a `.gitignore` file in the output directory
+containing `*`, which prevents the build artifacts from being checked into
+version control. If you want to commit the `pkg` directory to your repository
+(e.g. for GitHub Pages, Deno packages, or monorepo setups), you can use the
+`--no-gitignore` flag to skip generating the `.gitignore` file:
+
+```
+wasm-pack build --no-gitignore
+```
+
+This is also available with `--target web` and other targets.
+
 ## Panic strategy
 
 By default, Rust panics in WebAssembly compile with `panic=abort`, which aborts
@@ -243,4 +258,5 @@ it sees a `wasm64-*` triple:
 
 <sup id="footnote-0">0</sup> If you need to include additional assets in the pkg
 directory and your NPM package, we intend to have a solution for your use case
-soon. [↩](#wasm-pack-build)
+soon. You can use `--no-gitignore` to omit the `.gitignore` file in the
+meantime. [↩](#wasm-pack-build)
