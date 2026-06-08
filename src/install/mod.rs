@@ -260,7 +260,9 @@ pub fn cargo_install(
         .arg("--force")
         .arg(crate_name)
         .arg("--root")
-        .arg(&tmp);
+        .arg(&tmp)
+        .arg("--target-dir")
+        .arg(tmp.join("build"));
 
     if version != "latest" {
         cmd.arg("--version").arg(version);
