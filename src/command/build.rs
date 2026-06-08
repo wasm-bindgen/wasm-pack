@@ -29,6 +29,7 @@ pub struct Build {
     pub crate_data: manifest::CrateData,
     pub scope: Option<String>,
     pub disable_dts: bool,
+    pub skip_gitignore: bool,
     pub weak_refs: bool,
     pub reference_types: bool,
     pub target: Target,
@@ -136,6 +137,12 @@ pub struct BuildOptions {
     /// this flag will disable generating this TypeScript file.
     pub disable_dts: bool,
 
+    #[structopt(long = "skip-gitignore")]
+    /// Skips generating .gitignore file.
+    pub skip_gitignore: bool,
+
+    #[structopt(long = "target", short = "t", default_value = "bundler")]
+    /// Sets the target environment. [possible values: bundler, nodejs, web, no-modules]
     #[clap(long = "weak-refs")]
     /// Enable usage of the JS weak references proposal.
     pub weak_refs: bool,
@@ -205,6 +212,7 @@ impl Default for BuildOptions {
             scope: None,
             mode: InstallMode::default(),
             disable_dts: false,
+            skip_gitignore: false,
             weak_refs: false,
             reference_types: false,
             target: Target::default(),
@@ -283,6 +291,7 @@ impl Build {
             crate_data,
             scope: build_opts.scope,
             disable_dts: build_opts.disable_dts,
+            skip_gitignore: build_opts.skip_gitignore,
             weak_refs: build_opts.weak_refs,
             reference_types: build_opts.reference_types,
             target: build_opts.target,
@@ -432,7 +441,7 @@ impl Build {
 
     fn step_create_dir(&mut self) -> Result<()> {
         info!("Creating a pkg directory...");
-        create_pkg_dir(&self.out_dir)?;
+        create_pkg_dir(&self.out_dir, self.skip_gitignore)?;
         info!("Created a pkg directory at {:#?}.", &self.crate_path);
         Ok(())
     }
