@@ -4,6 +4,14 @@
 
 - ### 🤕 Fixes
 
+  - **Drop 32-bit Linux geckodriver support - [guybedford], [pull/1595]**
+
+    Mozilla discontinued 32-bit (x86) Linux geckodriver builds in v0.37.0, so the
+    download URL now 404s. The 32-bit Linux target is removed from `install_geckodriver`
+    and its test is skipped on that platform.
+
+    [pull/1595]: https://github.com/wasm-bindgen/wasm-pack/pull/1595
+
   - **Use prebuilt wasm-bindgen binary on macOS aarch64 - [guybedford], [pull/1585]**
 
     Previously wasm-pack built `wasm-bindgen-cli` from source on Apple Silicon. The

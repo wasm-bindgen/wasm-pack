@@ -36,9 +36,7 @@ pub fn get_or_install_geckodriver(cache: &Cache, mode: InstallMode) -> Result<Pa
 
 /// Download and install a pre-built `geckodriver` binary.
 pub fn install_geckodriver(cache: &Cache, installation_allowed: bool) -> Result<PathBuf> {
-    let (target, ext) = if target::LINUX && target::x86 {
-        ("linux32", "tar.gz")
-    } else if target::LINUX && target::x86_64 {
+    let (target, ext) = if target::LINUX && target::x86_64 {
         ("linux64", "tar.gz")
     } else if target::LINUX && target::aarch64 {
         ("linux-aarch64", "tar.gz")
