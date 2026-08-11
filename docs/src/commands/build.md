@@ -170,6 +170,8 @@ This flag:
 - Adds `-Z build-std=std,panic_unwind` to rebuild `std` with unwinding
   support.
 - Sets `RUSTFLAGS=-Cpanic=unwind` (preserving any user-provided `RUSTFLAGS`).
+- Passes `--enable-exception-handling` to `wasm-opt` so the optimiser accepts
+  the exception-handling instructions unwinding compiles to.
 
 The first time you use `--panic-unwind`, `wasm-pack` will install any missing
 prerequisites via `rustup`:

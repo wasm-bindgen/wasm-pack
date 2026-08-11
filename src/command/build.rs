@@ -521,6 +521,9 @@ impl Build {
         if build::is_tier3_wasm(&self.target_triple) {
             args.push("--enable-memory64".into());
         }
+        if self.panic_unwind {
+            args.push("--enable-exception-handling".into());
+        }
         info!("executing wasm-opt with {:?}", args);
         wasm_opt::run(
             &self.cache,
