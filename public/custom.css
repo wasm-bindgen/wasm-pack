@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css?family=Raleway');
+
+.navbar {
+  display: block;
+  width: 100%;
+  height: 6.5rem;
+  background: #fff;
+  z-index: 99;
+  border-bottom: 1px solid #eee;
+}
+
+.navbar-list {
+  list-style: none;
+  margin-bottom: 0;
+}
+
+.navbar-item {
+  position: relative;
+  float: right;
+  margin-bottom: 0;
+}
+
+.navbar-logo {
+  position: relative;
+  float: left;
+  margin-bottom: 0;
+  bottom: -5px;
+}
+
+.navbar-logo a img {
+  width: 50px;
+}
+
+.navbar-item a {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .2rem;
+  margin-right: 35px;
+  text-decoration: none;
+  line-height: 6.5rem;
+  color: #222;
+}
+
+#logo, #installer {
+  text-align: center;
+}
+
+#logo {
+  padding: 50px;
+}
+
+#logo img {
+  width: 80%;
+}
+
+#logo h1, h2 {
+  text-align: center;
+}
+
+#logo h2 {
+  font-size: 1.8rem;
+  letter-spacing: 0.01rem;
+  color: #222;
+}
+
+#installer a.button {
+  width: 100%;
+  height: 20%;
+  font-size: 1.8rem;
+  padding: 1.8rem;
+  margin: 10rem 0 1.8rem 0;
+  background-color: #6556EC;
+  border-color: #6556EC;
+}
+
+#installer img {
+  padding: 50px;
+  width: 20%;
+}
+
+pre.primary {
+  margin: 0 auto 2.5rem auto;
+  width: fit-content;
+
+  padding: 20px;
+  font-size: 2rem;
+  background-color: #000;
+  color: #fff;
+}
+
+a {
+  color: #6556EC;
+}
