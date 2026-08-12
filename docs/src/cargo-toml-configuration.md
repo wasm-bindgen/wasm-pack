@@ -55,4 +55,15 @@ debug-js-glue = false
 demangle-name-section = true
 dwarf-debug-info = false
 omit-default-module-path = false
+
+# When using the `--profile <name>` flag to build with a custom Cargo profile,
+# configuration is applied using the literal `custom` key.
+[package.metadata.wasm-pack.profile.custom]
+wasm-opt = ['-O']
+
+[package.metadata.wasm-pack.profile.custom.wasm-bindgen]
+debug-js-glue = false
+demangle-name-section = true
+dwarf-debug-info = false
+omit-default-module-path = false
 ```
