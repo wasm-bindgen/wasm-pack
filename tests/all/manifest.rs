@@ -105,6 +105,7 @@ fn it_creates_a_package_json_default_path() {
         "js_hello_world_bg.js",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
@@ -135,6 +136,7 @@ fn it_creates_a_package_json_provided_path() {
         "js_hello_world_bg.js",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
@@ -165,6 +167,7 @@ fn it_creates_a_package_json_provided_path_with_scope() {
         "js_hello_world_bg.js",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
@@ -199,6 +202,7 @@ fn it_creates_a_pkg_json_with_correct_files_on_node() {
         "js_hello_world_bg.wasm",
         "js_hello_world.d.ts",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
@@ -233,6 +237,7 @@ fn it_creates_a_pkg_json_with_correct_files_on_nomodules() {
         "js_hello_world.d.ts",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
@@ -265,11 +270,16 @@ fn it_creates_a_package_json_with_correct_files_when_out_name_is_provided() {
     assert_eq!(pkg.side_effects, vec!["./index.js", "./snippets/*"]);
 
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
-    let expected_files: HashSet<String> =
-        ["index_bg.wasm", "index_bg.js", "index.d.ts", "index.js"]
-            .iter()
-            .map(|&s| String::from(s))
-            .collect();
+    let expected_files: HashSet<String> = [
+        "index_bg.wasm",
+        "index_bg.js",
+        "index.d.ts",
+        "index.js",
+        "snippets",
+    ]
+    .iter()
+    .map(|&s| String::from(s))
+    .collect();
     assert_eq!(actual_files, expected_files);
 }
 
@@ -329,6 +339,7 @@ fn it_creates_a_package_json_with_correct_keys_when_types_are_skipped() {
         "js_hello_world_bg.wasm",
         "js_hello_world_bg.js",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
@@ -370,6 +381,7 @@ fn it_creates_a_package_json_with_npm_dependencies_provided_by_wasm_bindgen() {
         "js_hello_world_bg.wasm",
         "js_hello_world_bg.js",
         "js_hello_world.js",
+        "snippets",
     ]
     .iter()
     .map(|&s| String::from(s))
