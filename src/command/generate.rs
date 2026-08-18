@@ -17,7 +17,7 @@ pub fn generate(template: String, name: String, install_permitted: bool) -> Resu
     )?;
     generate::generate(&template, &name, &download)?;
 
-    let msg = format!("🐑 Generated new project at /{}", name);
+    let msg = format!("🐑 Generated new project at ./{}", name);
     PBAR.info(&msg);
     Ok(())
 }
