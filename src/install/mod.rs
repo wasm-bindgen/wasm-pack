@@ -268,6 +268,11 @@ pub fn cargo_install(
         cmd.arg("--version").arg(version);
     }
 
+    if version != "latest" {
+        cmd.arg("--version")
+           .arg(version);
+    }
+
     let context = format!("Installing {} with cargo", tool);
     child::run(cmd, "cargo install").context(context)?;
 
