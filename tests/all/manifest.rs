@@ -102,6 +102,7 @@ fn it_creates_a_package_json_default_path() {
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
     let expected_files: HashSet<String> = [
         "js_hello_world.d.ts",
+        "js_hello_world_bg.wasm.d.ts",
         "js_hello_world_bg.js",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
@@ -132,6 +133,7 @@ fn it_creates_a_package_json_provided_path() {
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
     let expected_files: HashSet<String> = [
         "js_hello_world.d.ts",
+        "js_hello_world_bg.wasm.d.ts",
         "js_hello_world_bg.js",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
@@ -162,6 +164,7 @@ fn it_creates_a_package_json_provided_path_with_scope() {
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
     let expected_files: HashSet<String> = [
         "js_hello_world.d.ts",
+        "js_hello_world_bg.wasm.d.ts",
         "js_hello_world_bg.js",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
@@ -197,6 +200,7 @@ fn it_creates_a_pkg_json_with_correct_files_on_node() {
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
     let expected_files: HashSet<String> = [
         "js_hello_world_bg.wasm",
+        "js_hello_world_bg.wasm.d.ts",
         "js_hello_world.d.ts",
         "js_hello_world.js",
     ]
@@ -231,6 +235,7 @@ fn it_creates_a_pkg_json_with_correct_files_on_nomodules() {
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
     let expected_files: HashSet<String> = [
         "js_hello_world.d.ts",
+        "js_hello_world_bg.wasm.d.ts",
         "js_hello_world_bg.wasm",
         "js_hello_world.js",
     ]
@@ -265,11 +270,16 @@ fn it_creates_a_package_json_with_correct_files_when_out_name_is_provided() {
     assert_eq!(pkg.side_effects, vec!["./index.js", "./snippets/*"]);
 
     let actual_files: HashSet<String> = pkg.files.into_iter().collect();
-    let expected_files: HashSet<String> =
-        ["index_bg.wasm", "index_bg.js", "index.d.ts", "index.js"]
-            .iter()
-            .map(|&s| String::from(s))
-            .collect();
+    let expected_files: HashSet<String> = [
+        "index_bg.wasm",
+        "index_bg.wasm.d.ts",
+        "index_bg.js",
+        "index.d.ts",
+        "index.js",
+    ]
+    .iter()
+    .map(|&s| String::from(s))
+    .collect();
     assert_eq!(actual_files, expected_files);
 }
 

@@ -683,6 +683,10 @@ impl CrateData {
         let dts_file = if !disable_dts {
             let file = format!("{}.d.ts", name_prefix);
             files.push(file.to_string());
+
+            let wasm_def_file = format!("{}_bg.wasm.d.ts", name_prefix);
+            files.push(wasm_def_file);
+
             Some(file)
         } else {
             None
