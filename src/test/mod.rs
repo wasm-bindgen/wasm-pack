@@ -9,8 +9,7 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Command;
 
-/// Run `cargo test` with the `nightly` toolchain and targeting
-/// `wasm32-unknown-unknown`.
+/// Run `cargo test` targeting `wasm32-unknown-unknown`.
 pub fn cargo_test_wasm<I, K, V>(
     path: &Path,
     release: bool,
