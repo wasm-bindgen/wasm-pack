@@ -4,6 +4,7 @@ use self::krate::Krate;
 use crate::child;
 use crate::emoji;
 use crate::install;
+use crate::lockfile::GitSource;
 use crate::PBAR;
 use anyhow::{anyhow, bail, Context, Result};
 use binary_install::{Cache, Download};
@@ -86,6 +87,33 @@ pub fn download_prebuilt_or_cargo_install(
     }
 
     cargo_install(tool, cache, version, install_permitted)
+}
+
+/// Install the `wasm-bindgen` CLI matching the crate's `wasm-bindgen`
+/// dependency: built from the same revision for a git dependency, otherwise
+/// the prebuilt (or `cargo install`ed) release from the lockfile.
+pub fn wasm_bindgen_cli(
+    cache: &Cache,
+    lockfile: &crate::lockfile::Lockfile,
+    install_permitted: bool,
+) -> Result<Status> {
+    match lockfile.wasm_bindgen_git_source() {
+        Some(git) => {
+            PBAR.info(&format!(
+                "{}Building wasm-bindgen-cli from {}#{}...",
+                emoji::DOWN_ARROW,
+                git.url,
+                git.rev
+            ));
+            cargo_install_git(Tool::WasmBindgen, cache, &git, install_permitted)
+        }
+        None => download_prebuilt_or_cargo_install(
+            Tool::WasmBindgen,
+            cache,
+            lockfile.require_wasm_bindgen()?,
+            install_permitted,
+        ),
+    }
 }
 
 /// Check if the tool dependency is locally satisfied.
@@ -219,6 +247,44 @@ pub fn cargo_install(
     version: &str,
     install_permitted: bool,
 ) -> Result<Status> {
+    cargo_install_from(
+        tool,
+        cache,
+        CargoSource::Registry(version),
+        install_permitted,
+    )
+}
+
+/// Where `cargo install` fetches a tool from.
+pub enum CargoSource<'a> {
+    /// A crates.io release (`"latest"` for the newest).
+    Registry(&'a str),
+    /// A git repository at an exact revision.
+    Git(&'a GitSource),
+}
+
+/// `cargo install` the tool from a git revision, e.g. to match a crate whose
+/// `wasm-bindgen` dependency is itself a git dependency.
+pub fn cargo_install_git(
+    tool: Tool,
+    cache: &Cache,
+    source: &GitSource,
+    install_permitted: bool,
+) -> Result<Status> {
+    cargo_install_from(tool, cache, CargoSource::Git(source), install_permitted)
+}
+
+fn cargo_install_from(
+    tool: Tool,
+    cache: &Cache,
+    source: CargoSource<'_>,
+    install_permitted: bool,
+) -> Result<Status> {
+    let version = match source {
+        CargoSource::Registry(version) => version.to_string(),
+        CargoSource::Git(git) => format!("git-{}", git.rev),
+    };
+    let version = version.as_str();
     debug!(
         "Attempting to use a `cargo install`ed version of `{}={}`",
         tool, version,
@@ -264,8 +330,14 @@ pub fn cargo_install(
         .arg("--target-dir")
         .arg(tmp.join("build"));
 
-    if version != "latest" {
-        cmd.arg("--version").arg(version);
+    match source {
+        CargoSource::Registry("latest") => {}
+        CargoSource::Registry(version) => {
+            cmd.arg("--version").arg(version);
+        }
+        CargoSource::Git(git) => {
+            cmd.arg("--git").arg(&git.url).arg("--rev").arg(&git.rev);
+        }
     }
 
     let context = format!("Installing {} with cargo", tool);

@@ -51,6 +51,10 @@ pub enum Command {
             default_value = crate::generate::DEFAULT_TEMPLATE
         )]
         template: String,
+        /// Scaffold a project targeting wasm32-unknown-emscripten instead
+        /// of the default wasm32-unknown-unknown. Requires emsdk on PATH.
+        #[clap(long = "emscripten", conflicts_with = "template")]
+        emscripten: bool,
         #[clap(long = "mode", short = 'm', default_value = "normal")]
         /// Should we install or check the presence of binary tools. [possible values: no-install, normal, force]
         mode: InstallMode,
@@ -132,12 +136,22 @@ pub fn run_wasm_pack(command: Command) -> Result<()> {
         Command::Generate {
             template,
             name,
+            emscripten,
             mode,
         } => {
             info!("Running generate command...");
-            info!("Template: {:?}", &template);
             info!("Name: {:?}", &name);
-            generate(template, name, mode.install_permitted())
+            // `--emscripten` is shorthand for selecting the in-tree emscripten
+            // template subdirectory from the default wasm-pack repo. Users
+            // who pass `--template` keep full control; clap rejects the
+            // combination via `conflicts_with`.
+            let template = if emscripten {
+                crate::generate::EMSCRIPTEN_TEMPLATE.to_owned()
+            } else {
+                template
+            };
+            info!("Template: {:?}", &template);
+            generate(template, name, emscripten, mode.install_permitted())
         }
         Command::Publish {
             target,

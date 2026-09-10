@@ -14,6 +14,7 @@ extern crate wasm_pack;
 
 mod build;
 mod download;
+mod emscripten;
 mod generate;
 mod license;
 mod lockfile;

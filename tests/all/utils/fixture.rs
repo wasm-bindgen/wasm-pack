@@ -449,6 +449,199 @@ pub fn js_hello_world() -> Fixture {
     fixture
 }
 
+pub fn emscripten_hello_world() -> Fixture {
+    let fixture = Fixture::new();
+
+    // Pinned to wasm-bindgen main rather than a release: the DWARF fixes
+    // emcc's `wasm-opt -g` needs (walrus 0.27.2, wasm-bindgen#5328) haven't
+    // shipped yet. wasm-pack builds the matching CLI from the same revision.
+    // `js-sys` comes from the same source so the graph has a single
+    // `wasm-bindgen`.
+    // TODO: switch back to a release pin once one includes wasm-bindgen#5328.
+    //
+    // A `bin` crate: rustc links emscripten executables through emcc as the
+    // main module. The explicit bin name keeps the emitted `.js` and `.wasm`
+    // names consistent (cargo would otherwise name the executable after the
+    // hyphenated package).
+    let cargo_toml = r#"[package]
+authors = ["The wasm-pack developers"]
+description = "emscripten + wasm-bindgen integration test"
+license = "WTFPL"
+name = "em-hello-world"
+repository = "https://github.com/wasm-bindgen/wasm-pack.git"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "em_hello_world"
+path = "src/main.rs"
+
+[dependencies]
+wasm-bindgen = { git = "https://github.com/wasm-bindgen/wasm-bindgen", branch = "main" }
+js-sys = { git = "https://github.com/wasm-bindgen/wasm-bindgen", branch = "main" }
+"#;
+
+    fixture
+        .readme()
+        .file("Cargo.toml", cargo_toml)
+        .file(
+            ".cargo/config.toml",
+            r#"
+[build]
+target = "wasm32-unknown-emscripten"
+
+[target.wasm32-unknown-emscripten]
+rustflags = [
+    "-Cllvm-args=-enable-emscripten-cxx-exceptions=0",
+    "-Cpanic=abort",
+    "-Crelocation-model=static",
+]
+            "#,
+        )
+        .file(
+            "src/main.rs",
+            r#"
+use js_sys::Function;
+use wasm_bindgen::prelude::*;
+
+fn main() {}
+
+#[wasm_bindgen]
+pub fn rs_add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+#[wasm_bindgen]
+pub fn rs_greet(name: &str) -> String {
+    format!("hello, {name}!")
+}
+
+#[wasm_bindgen]
+pub fn rs_make_adder(n: i32) -> Function {
+    let f = Closure::<dyn Fn(i32) -> i32>::new(move |x| x + n);
+    let ret = f.as_ref().unchecked_ref::<Function>().clone();
+    f.forget();
+    ret
+}
+
+#[wasm_bindgen]
+pub fn rs_sum(values: &[f64]) -> f64 {
+    values.iter().sum()
+}
+
+#[wasm_bindgen]
+pub fn rs_xor(bytes: &[u8]) -> u8 {
+    bytes.iter().fold(0u8, |acc, &b| acc ^ b)
+}
+
+#[wasm_bindgen]
+pub fn rs_divide(num: i32, den: i32) -> Result<i32, JsError> {
+    if den == 0 {
+        Err(JsError::new("division by zero"))
+    } else {
+        Ok(num / den)
+    }
+}
+
+#[wasm_bindgen]
+pub struct Counter {
+    value: i32,
+}
+
+#[wasm_bindgen]
+impl Counter {
+    #[wasm_bindgen(constructor)]
+    pub fn new(initial: i32) -> Counter {
+        Counter { value: initial }
+    }
+
+    pub fn increment(&mut self, by: i32) -> i32 {
+        self.value += by;
+        self.value
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn value(&self) -> i32 {
+        self.value
+    }
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = globalThis, js_name = rs_test_doubler)]
+    fn js_doubler(n: i32) -> i32;
+}
+
+#[wasm_bindgen]
+pub fn rs_double_via_js(n: i32) -> i32 {
+    js_doubler(n)
+}
+
+// `#[wasm_bindgen(module = "...")]` ESM imports.
+#[wasm_bindgen(module = "node:os")]
+extern "C" {
+    #[wasm_bindgen(js_name = hostname)]
+    fn node_os_hostname() -> String;
+}
+
+#[wasm_bindgen]
+pub fn rs_hostname() -> String {
+    node_os_hostname()
+}
+
+// `js_namespace = console` — single-level namespace on a global object.
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn console_log(msg: &str);
+}
+
+/// Calls `console.log(...)` from Rust. The integration test stubs out
+/// `console.log` to capture the call.
+#[wasm_bindgen]
+pub fn rs_log(msg: &str) {
+    console_log(msg);
+}
+
+// `js_namespace` paired with `module = "..."`. The namespace resolves on
+// the imported binding, not on `globalThis`.
+#[wasm_bindgen(module = "node:path")]
+extern "C" {
+    #[wasm_bindgen(js_namespace = posix, js_name = join)]
+    fn node_path_posix_join(a: &str, b: &str) -> String;
+}
+
+/// Calls `posix.join(...)` on `node:path`. Exercises the
+/// `js_namespace + module = "..."` combination.
+#[wasm_bindgen]
+pub fn rs_path_posix_join(a: &str, b: &str) -> String {
+    node_path_posix_join(a, b)
+}
+
+// Class export with `js_namespace = ["app", "math"]` — the class attaches
+// under the `app` export rather than as a bare `Calc`. The matching
+// `js_namespace` on the impl is required (the macro can't see the struct's
+// attrs across invocations).
+#[wasm_bindgen(js_namespace = ["app", "math"])]
+pub struct Calc {
+    value: i32,
+}
+
+#[wasm_bindgen(js_namespace = ["app", "math"])]
+impl Calc {
+    #[wasm_bindgen(constructor)]
+    pub fn new(initial: i32) -> Calc {
+        Calc { value: initial }
+    }
+    pub fn double(&self) -> i32 {
+        self.value * 2
+    }
+}
+"#,
+        );
+    fixture
+}
+
 pub fn js_hello_world_with_custom_profile(profile_name: &str) -> Fixture {
     let fixture = Fixture::new();
     fixture

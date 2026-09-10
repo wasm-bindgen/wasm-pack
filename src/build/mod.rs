@@ -8,7 +8,7 @@ use crate::PBAR;
 use anyhow::{anyhow, bail, Context, Result};
 use cargo_metadata::Message;
 use std::io::BufReader;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::str;
 
@@ -144,26 +144,7 @@ pub fn cargo_build_wasm(
         cmd.env("RUSTFLAGS", combined);
     }
 
-    // The `cargo` command is executed inside the directory at `path`, so relative paths set via extra options won't work.
-    // To remedy the situation, all detected paths are converted to absolute paths.
-    let mut handle_path = false;
-    let extra_options_with_absolute_paths = extra_options
-        .iter()
-        .map(|option| -> Result<String> {
-            let value = if handle_path && Path::new(option).is_relative() {
-                std::env::current_dir()?
-                    .join(option)
-                    .to_str()
-                    .ok_or_else(|| anyhow!("path contains non-UTF-8 characters"))?
-                    .to_string()
-            } else {
-                option.to_string()
-            };
-            handle_path = matches!(&**option, "--target-dir" | "--out-dir" | "--manifest-path");
-            Ok(value)
-        })
-        .collect::<Result<Vec<_>>>()?;
-    cmd.args(extra_options_with_absolute_paths);
+    cmd.args(absolutize_extra_options(extra_options)?);
 
     cmd.arg("--message-format=json");
 
@@ -206,6 +187,145 @@ pub fn cargo_build_wasm(
             )
         }
     }
+}
+
+/// The `cargo` command is executed inside the crate directory, so relative
+/// paths in extra options won't resolve. Convert path-valued options to
+/// absolute paths.
+fn absolutize_extra_options(extra_options: &[String]) -> Result<Vec<String>> {
+    let mut handle_path = false;
+    extra_options
+        .iter()
+        .map(|option| -> Result<String> {
+            let value = if handle_path && Path::new(option).is_relative() {
+                std::env::current_dir()?
+                    .join(option)
+                    .to_str()
+                    .ok_or_else(|| anyhow!("path contains non-UTF-8 characters"))?
+                    .to_string()
+            } else {
+                option.to_string()
+            };
+            handle_path = matches!(&**option, "--target-dir" | "--out-dir" | "--manifest-path");
+            Ok(value)
+        })
+        .collect::<Result<Vec<_>>>()
+}
+
+/// Run `cargo rustc` for the emscripten target.
+///
+/// The whole emscripten build is this one cargo invocation: rustc drives
+/// `emcc` as the linker, and the injected `-Clink-arg=-sWASM_BINDGEN`
+/// makes emcc run `wasm-bindgen` (resolved from `PATH`, hence
+/// `bindgen_dir`) as a post-link step. `cargo rustc` is used rather than
+/// `cargo build` because its trailing flags apply only to the final crate
+/// and *compose* with any user rustflags from `.cargo/config.toml`, instead
+/// of replacing them the way a `RUSTFLAGS` env var would.
+///
+/// Returns the paths of the emitted `.js` entry point and `.wasm` binary.
+pub fn cargo_rustc_emscripten(
+    path: &Path,
+    profile: BuildProfile,
+    extra_options: &[String],
+    target_triple: &str,
+    bin_name: &str,
+    link_args: &[String],
+    bindgen_dir: &Path,
+    emcc_env: &crate::emscripten::EmccEnv,
+) -> Result<(PathBuf, PathBuf)> {
+    let msg = format!("{}Compiling to Wasm via emcc...", emoji::CYCLONE);
+    PBAR.info(&msg);
+
+    let mut cmd = Command::new("cargo");
+    cmd.current_dir(path);
+    cmd.arg("rustc").arg("--bin").arg(bin_name);
+
+    if PBAR.quiet() {
+        cmd.arg("--quiet");
+    }
+
+    match profile {
+        BuildProfile::Profiling | BuildProfile::Release => {
+            cmd.arg("--release");
+        }
+        BuildProfile::Dev => {}
+        BuildProfile::Custom(arg) => {
+            cmd.arg("--profile").arg(arg);
+        }
+    }
+
+    cmd.env("CARGO_BUILD_TARGET", target_triple);
+
+    // emcc locates `wasm-bindgen` via PATH; prepend the version-matched CLI
+    // wasm-pack installed, plus any emcc toolchain dirs from resolution.
+    let path_var = std::env::var_os("PATH").unwrap_or_default();
+    let paths = std::iter::once(bindgen_dir.to_path_buf())
+        .chain(emcc_env.path_prepends.iter().cloned())
+        .chain(std::env::split_paths(&path_var))
+        .collect::<Vec<_>>();
+    cmd.env("PATH", std::env::join_paths(paths)?);
+    for (key, value) in &emcc_env.vars {
+        cmd.env(key, value);
+    }
+
+    cmd.args(absolutize_extra_options(extra_options)?);
+    cmd.arg("--message-format=json");
+    cmd.arg("--");
+    if let Some(linker) = &emcc_env.linker {
+        cmd.arg(format!("-Clinker={}", linker.display()));
+    }
+    cmd.args(link_args);
+
+    let mut cargo_process = cmd.stdout(Stdio::piped()).spawn()?;
+
+    let bin_artifact =
+        Message::parse_stream(BufReader::new(cargo_process.stdout.as_mut().unwrap()))
+            .filter_map(|msg| {
+                match msg {
+                    Ok(Message::CompilerArtifact(artifact)) if artifact.executable.is_some() => {
+                        return Some(artifact)
+                    }
+                    Ok(Message::CompilerMessage(msg)) => eprintln!("{msg}"),
+                    Ok(Message::TextLine(text)) => eprintln!("{text}"),
+                    Err(err) => log::error!("Couldn't parse cargo message: {err}"),
+                    _ => {}
+                }
+                None
+            })
+            .last();
+
+    if !cargo_process
+        .wait()
+        .context("Failed to wait for cargo build process")?
+        .success()
+    {
+        bail!("`cargo rustc` failed, see the output above for details");
+    }
+
+    let artifact =
+        bin_artifact.context("Expected a binary artifact in the output of `cargo rustc`")?;
+    let js_path: PathBuf = artifact.executable.as_ref().unwrap().clone().into();
+
+    // The `.wasm` is emitted alongside the JS. Its filename follows the crate
+    // name (underscores) rather than the bin name, so probe both.
+    let wasm_path = artifact
+        .filenames
+        .iter()
+        .find(|f| f.extension() == Some("wasm"))
+        .map(|f| PathBuf::from(f.clone()))
+        .or_else(|| {
+            let sibling = js_path.with_extension("wasm");
+            sibling.exists().then_some(sibling)
+        })
+        .or_else(|| {
+            let sibling = js_path
+                .parent()?
+                .join(format!("{}.wasm", bin_name.replace('-', "_")));
+            sibling.exists().then_some(sibling)
+        })
+        .context("Could not locate the .wasm emitted next to the emcc JS output")?;
+
+    Ok((js_path, wasm_path))
 }
 
 /// Runs `cargo build --tests` targeting `wasm32-unknown-unknown`.

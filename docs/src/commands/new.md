@@ -33,6 +33,20 @@ template.
 
 [`cargo-generate`]: https://github.com/ashleygwilliams/cargo-generate
 
+## Emscripten target
+
+Pass `--emscripten` to scaffold a project that builds for
+`wasm32-unknown-emscripten` instead of the default `wasm32-unknown-unknown`:
+
+```
+wasm-pack new myproject --emscripten
+```
+
+This selects the `wasm-pack-emscripten-template` (a sibling of the default
+template in the same repo). Requires [emsdk](https://emscripten.org/) to be
+installed and `emcc` reachable on `PATH`. See the
+[Emscripten target chapter](../emscripten-target.html) for details.
+
 ## Mode
 
 The `wasm-pack new` command can be given an optional mode argument, e.g.:

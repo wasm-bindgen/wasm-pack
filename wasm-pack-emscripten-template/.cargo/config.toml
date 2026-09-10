@@ -1,0 +1,19 @@
+# Make `cargo build` (and `wasm-pack build`) target emscripten by default.
+[build]
+target = "wasm32-unknown-emscripten"
+
+# Codegen settings for all crates in the graph. wasm-pack composes its own
+# emcc link settings (`-sWASM_BINDGEN` etc.) on top of these via
+# `cargo rustc` trailing args, so anything added here is preserved.
+#   * panic=abort — panic=unwind on emscripten needs the wasm-exceptions
+#     toolchain story to settle (wasm-bindgen#5165). Override at your own risk.
+#   * relocation-model=static — the default PIC model isn't needed for a
+#     statically linked main module.
+#   * enable-emscripten-cxx-exceptions=0 — disables LLVM's emscripten-style
+#     exception lowering, required with panic=abort.
+[target.wasm32-unknown-emscripten]
+rustflags = [
+    "-Cllvm-args=-enable-emscripten-cxx-exceptions=0",
+    "-Cpanic=abort",
+    "-Crelocation-model=static",
+]

@@ -3,7 +3,7 @@
 use crate::build;
 use crate::cache;
 use crate::command::utils::get_crate_path;
-use crate::install::{self, InstallMode, Tool};
+use crate::install::{self, InstallMode};
 use crate::lockfile::Lockfile;
 use crate::manifest;
 use crate::test::{self, webdriver};
@@ -202,6 +202,21 @@ impl Test {
 
     /// Execute this test command.
     pub fn run(mut self) -> Result<()> {
+        // `wasm-pack test` runs `#[wasm_bindgen_test]` cases via
+        // `wasm-bindgen-test-runner`, which expects a wasm-bindgen-compiled
+        // wasm binary. The emscripten target produces a fundamentally
+        // different artifact (an emcc-linked ES module), so the runner can't
+        // drive it. Fail fast with a clear message until a dedicated
+        // emscripten test runner is available.
+        if self.target_triple.ends_with("-emscripten") {
+            bail!(
+                "`wasm-pack test` does not currently support the {} target. \
+                 Run your tests with `cargo test` directly, or target \
+                 wasm32-unknown-unknown for `wasm-pack test`.",
+                self.target_triple,
+            );
+        }
+
         let process_steps = self.get_process_steps();
 
         let started = Instant::now();
@@ -320,7 +335,7 @@ impl Test {
     fn step_install_wasm_bindgen(&mut self) -> Result<()> {
         info!("Identifying wasm-bindgen dependency...");
         let lockfile = Lockfile::new(&self.crate_data)?;
-        let bindgen_version = lockfile.require_wasm_bindgen()?;
+        lockfile.require_wasm_bindgen()?;
 
         // Unlike `wasm-bindgen` and `wasm-bindgen-cli`, `wasm-bindgen-test`
         // will work with any semver compatible `wasm-bindgen-cli`, so just make
@@ -336,12 +351,8 @@ impl Test {
             )
         }
 
-        let status = install::download_prebuilt_or_cargo_install(
-            Tool::WasmBindgen,
-            &self.cache,
-            &bindgen_version,
-            self.mode.install_permitted(),
-        )?;
+        let status =
+            install::wasm_bindgen_cli(&self.cache, &lockfile, self.mode.install_permitted())?;
 
         self.test_runner_path = match status {
             install::Status::Found(dl) => Some(dl.binary("wasm-bindgen-test-runner")?),
