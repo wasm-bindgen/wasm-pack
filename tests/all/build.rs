@@ -38,6 +38,24 @@ fn it_should_not_make_a_pkg_json_if_passed_no_pack() {
 }
 
 #[test]
+fn it_should_not_delete_existing_pkg_json_if_passed_no_pack() {
+    let fixture = utils::fixture::js_hello_world();
+    let package_json_path = fixture.path.join("pkg").join("package.json");
+    fixture.file("pkg/package.json", r#"{ "name": "pre-existing" }"#);
+    fixture
+        .wasm_pack()
+        .arg("build")
+        .arg("--no-pack")
+        .assert()
+        .success();
+
+    assert_eq!(
+        fs::read_to_string(&package_json_path).unwrap(),
+        r#"{ "name": "pre-existing" }"#
+    );
+}
+
+#[test]
 fn it_should_build_js_hello_world_example_with_custom_target_dir() {
     let fixture = utils::fixture::js_hello_world();
     fixture

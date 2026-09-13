@@ -439,7 +439,7 @@ impl Build {
 
     fn step_create_dir(&mut self) -> Result<()> {
         info!("Creating a pkg directory...");
-        create_pkg_dir(&self.out_dir, self.no_gitignore)?;
+        create_pkg_dir(&self.out_dir, self.no_gitignore, self.no_pack)?;
         info!("Created a pkg directory at {:#?}.", &self.crate_path);
         Ok(())
     }
