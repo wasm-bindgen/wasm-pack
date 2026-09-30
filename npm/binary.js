@@ -33,8 +33,19 @@ const getPlatform = () => {
 const getConfig = () => {
   const platform = getPlatform();
   const version = require("./package.json").version;
+  const author = process.env.WASMPACK_REPO_AUTHOR || "wasm-bindgen";
+  const name = process.env.WASMPACK_REPO_NAME || "wasm-pack";
   const binaryName = platform === WINDOWS_TARGET ? "wasm-pack.exe" : "wasm-pack";
-  const url = `https://github.com/wasm-bindgen/wasm-pack/releases/download/v${version}/wasm-pack-v${version}-${platform}.tar.gz`;
+  let url = process.env.WASMPACK_CUSTOM_URL;
+  if (url) {
+    url = url
+      .replace(/{{author}}/g, author)
+      .replace(/{{name}}/g, name)
+      .replace(/{{version}}/g, version)
+      .replace(/{{platform}}/g, platform);
+  } else {
+    url = `https://github.com/${author}/${name}/releases/download/v${version}/${name}-v${version}-${platform}.tar.gz`;
+  }
   const installDirectory = path.join(__dirname, "binary");
   return {
     binaryName,
