@@ -41,9 +41,11 @@ jobs:
             os: macos-latest
             rust: stable
           - target: x86_64-pc-windows-msvc
+            arch: amd64
             os: windows-latest
             rust: stable
           - target: aarch64-pc-windows-msvc
+            arch: arm64
             os: windows-latest
             rust: stable
 
@@ -101,9 +103,9 @@ jobs:
         shell: bash
         run: |
           cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }}.exe ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ matrix.target }}/${{ env.RELEASE_BIN }}.exe
-          cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }}.exe wasm-pack-init.exe
+          cp ./target/${{ matrix.target }}/release/${{ env.RELEASE_BIN }}.exe wasm-pack-init-${{ matrix.arch }}.exe
           mv ${{ env.RELEASE_ADDS }} ./${{ env.RELEASE_DIR }}/${{ env.RELEASE_BIN }}-${{ steps.get_version.outputs.VERSION }}-${{ matrix.target }}
-          mv wasm-pack-init.exe ${{ env.RELEASE_DIR }}
+          mv wasm-pack-init-${{ matrix.arch }}.exe ${{ env.RELEASE_DIR }}
 
       - name: Create tarball
         shell: bash
@@ -208,15 +210,26 @@ jobs:
           asset_content_type: application/gzip
           asset_name: wasm-pack-${{ steps.get_version.outputs.VERSION }}-${{ env.WINDOWS_ARM64_TARGET }}.tar.gz
 
-      - name: Release Windows init exe
+      - name: Release Windows init amd64 exe
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./wasm-pack-init.exe
+          asset_path: ./wasm-pack-init-amd64.exe
           asset_content_type: application/vnd.microsoft.portable-executable
+          # don't change the file name for the 0 people that install via some script that hardcodes this file name
           asset_name: wasm-pack-init.exe
+
+      - name: Release Windows init ARM64 exe
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./wasm-pack-init-arm64.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+          asset_name: wasm-pack-init-arm64.exe
 
       - name: Release AMD64 MacOS tarball
         uses: actions/upload-release-asset@v1
