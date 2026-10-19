@@ -4,11 +4,14 @@ on:
   push:
   pull_request:    
 
+# Building runs code from the branch being built, so it gets a read-only
+# token. Only the deploy job, for pushes to master, can write.
+permissions:
+  contents: read
+
 jobs:
   book:
-    permissions:
-      contents: write
-    name: Build and deploy book
+    name: Build book
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -42,9 +45,29 @@ jobs:
           rustc ./docs/_installer/build-installer.rs
           ./build-installer
 
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          name: book
+          path: docs
+          retention-days: 1
+
+  deploy:
+    name: Deploy book
+    needs: book
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v4
+        with:
+          name: book
+          path: docs
+
       - name: Deploy book
         uses: JamesIves/github-pages-deploy-action@v4.4.1
-        if: ${{ github.ref == 'refs/heads/master' }}
         with:
           branch: gh-pages
           folder: docs
