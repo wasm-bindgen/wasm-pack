@@ -12,16 +12,14 @@ const https = require("https");
 const { spawnSync } = require("child_process");
 const tar = require("tar");
 
-const WINDOWS_TARGET = "x86_64-pc-windows-msvc";
-
 const getPlatform = () => {
   const type = os.type();
   const arch = os.arch();
 
   // https://github.com/nodejs/node/blob/c3664227a83cf009e9a2e1ddeadbd09c14ae466f/deps/uv/src/win/util.c#L1566-L1573
-  if ((type === "Windows_NT" || type.startsWith("MINGW32_NT-")) && arch === "x64") {
-    return WINDOWS_TARGET;
-  }
+  const isWindows = (type === "Windows_NT" || type.startsWith("MINGW32_NT-"));
+  if (isWindows && arch === "x64") return "x86_64-pc-windows-msvc";
+  if (isWindows && arch === "arm64") return "aarch64-pc-windows-msvc";
   if (type === "Linux" && arch === "x64") return "x86_64-unknown-linux-musl";
   if (type === "Linux" && arch === "arm64") return "aarch64-unknown-linux-musl";
   if (type === "Darwin" && arch === "x64") return "x86_64-apple-darwin";
@@ -33,7 +31,7 @@ const getPlatform = () => {
 const getConfig = () => {
   const platform = getPlatform();
   const version = require("./package.json").version;
-  const binaryName = platform === WINDOWS_TARGET ? "wasm-pack.exe" : "wasm-pack";
+  const binaryName = platform.endsWith("-pc-windows-msvc") ? "wasm-pack.exe" : "wasm-pack";
   const url = `https://github.com/wasm-bindgen/wasm-pack/releases/download/v${version}/wasm-pack-v${version}-${platform}.tar.gz`;
   const installDirectory = path.join(__dirname, "binary");
   return {
