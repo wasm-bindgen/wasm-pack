@@ -57,7 +57,8 @@ dwarf-debug-info = false
 omit-default-module-path = false
 
 # When using the `--profile <name>` flag to build with a custom Cargo profile,
-# configuration is applied using the literal `custom` key.
+# configuration is applied using the literal `custom` key, regardless of the
+# profile name. All custom profiles share this configuration.
 [package.metadata.wasm-pack.profile.custom]
 wasm-opt = ['-O']
 
