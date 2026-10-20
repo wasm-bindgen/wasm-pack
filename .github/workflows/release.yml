@@ -146,7 +146,7 @@ jobs:
           emoji=$(cut -d' ' -f2 <<< "$heading")
           echo "name=$emoji $GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
 
-      # Published once both registries are, after which it's immutable.
+      # Published on approval, after which it's immutable.
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -268,18 +268,49 @@ jobs:
           asset_content_type: application/gzip
           asset_name: wasm-pack-${{ steps.get_version.outputs.VERSION }}-${{ env.MACOS_ARM64_TARGET }}.tar.gz
 
+      # Releases are immutable once published, so check the draft has every
+      # asset before it goes for approval.
+      - name: Check release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for target in $LINUX_AMD64_TARGET $LINUX_ARM64_TARGET $WINDOWS_AMD64_TARGET \
+              $WINDOWS_ARM64_TARGET $MACOS_AMD64_TARGET $MACOS_ARM64_TARGET; do
+            echo "wasm-pack-$GITHUB_REF_NAME-$target.tar.gz"
+          done > expected
+          printf '%s\n' wasm-pack-init.exe wasm-pack-init-arm64.exe >> expected
+          sort -o expected expected
+          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft,assets \
+            --jq 'if .isDraft then .assets[].name else error("not a draft") end' | sort > uploaded
+          diff expected uploaded
 
-  # Both publish jobs wait on the publish environment, so one approval covers
-  # them.
+  # The approval publishes the GitHub release first, since the npm package
+  # downloads its binary from the release, whose assets aren't public while
+  # it's a draft.
+  finalize:
+    name: Publish GitHub Release
+    environment:
+      name: publish
+    needs: release
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+
   cargo-publish:
     name: Publish to crates.io
     environment:
-      name: publish
+      name: crate-publish
     permissions:
       id-token: write
     if: github.repository == 'wasm-bindgen/wasm-pack'
     needs:
-      - release
+      - finalize
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -292,9 +323,7 @@ jobs:
 
   npm-publish:
     name: Publish npm package
-    environment:
-      name: publish
-    needs: release
+    needs: finalize
     # Requires the NPM_TOKEN repository secret.
     if: ${{ github.repository == 'wasm-bindgen/wasm-pack' }}
     permissions:
@@ -323,30 +352,3 @@ jobs:
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  finalize:
-    name: Publish GitHub Release
-    needs:
-      - cargo-publish
-      - npm-publish
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ github.token }}
-    steps:
-      # Releases are immutable once published, so check the draft has every
-      # asset first.
-      - shell: bash
-        run: |
-          set -euo pipefail
-          for target in $LINUX_AMD64_TARGET $LINUX_ARM64_TARGET $WINDOWS_AMD64_TARGET \
-              $WINDOWS_ARM64_TARGET $MACOS_AMD64_TARGET $MACOS_ARM64_TARGET; do
-            echo "wasm-pack-$GITHUB_REF_NAME-$target.tar.gz"
-          done > expected
-          printf '%s\n' wasm-pack-init.exe wasm-pack-init-arm64.exe >> expected
-          sort -o expected expected
-          gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft,assets \
-            --jq 'if .isDraft then .assets[].name else error("not a draft") end' | sort > uploaded
-          diff expected uploaded
-      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest

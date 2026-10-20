@@ -19,10 +19,12 @@ Releases are automated, with maintainers reviewing each step:
   workflow tags it `v#.#.#`. If they fail, re-running the failed jobs tags it
   once they pass.
 1. The tag runs the Release workflow, which builds the binaries into a draft
-  GitHub release with the changelog section as its notes, then waits for
-  approval of the `publish` environment.
-1. Approval publishes to crates.io and npm, then publishes the GitHub release
-  and marks it as the latest. Releases are immutable once published.
+  GitHub release with the changelog section as its notes, checks it has every
+  asset, then waits for approval of the `publish` environment. The site's
+  installer already points at the new version from the merge, so approve
+  promptly.
+1. Approval publishes the GitHub release and marks it as the latest, then
+  publishes to crates.io and npm. Releases are immutable once published.
 
 To release by hand, make the same changes in a PR, merge it, and push the
 `v#.#.#` tag once the tests pass, if the Release tag workflow didn't.
