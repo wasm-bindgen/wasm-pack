@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "notes": {
+      "type": "string",
+      "description": "Markdown notes for the maintainers reviewing the release PR"
+    }
+  },
+  "required": ["notes"],
+  "additionalProperties": false
+}
