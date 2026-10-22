@@ -84,8 +84,11 @@ $ tree crates/foo
 # Run all tests in tests/diff_patch.rs in Firefox
 wasm-pack test crates/foo --firefox --headless --test diff_patch
 
-# Run all tests in tests/diff_patch.rs that contain the word "replace"
+# Run all tests in tests/diff_patch.rs that contain the word "replace" (does that still work?)
 wasm-pack test crates/foo --firefox --headless --test diff_patch replace
+
+# Run single test in tests/diff_patch.rs 
+wasm-pack test crates/foo --firefox --headless --test diff_patch -- modname::test_name
 
 # Run all tests inside of a `tests` module inside of src/lib/diff.rs
 wasm-pack test crates/foo --firefox --headless --lib diff::tests
