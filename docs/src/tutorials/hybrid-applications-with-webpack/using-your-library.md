@@ -55,13 +55,15 @@ pub fn run() -> Result<(), JsValue> {
 }
 ```
 
-Now, open up the `js/index.js` file. We see our Rust-generated wasm `run` function being
+Now, open up the `js/index.js` file. We see our Rust-generated wasm `main_js` function being
 called inside our JS file.
 
 ```js
-import("../crate/pkg").then(module => {
-  module.run();
-});
+import("../pkg/index.js")
+  .then((module) => {
+    module.main_js();
+  })
+  .catch(console.error);
 ```
 
 ## Run The Project
