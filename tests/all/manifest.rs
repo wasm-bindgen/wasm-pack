@@ -346,7 +346,7 @@ fn it_creates_a_package_json_with_npm_dependencies_provided_by_wasm_bindgen() {
     utils::manifest::create_wbg_package_json(
         &out_dir,
         r#"
-        { "foo": "^1.2.3" }
+        {"dependencies": {"foo": "^1.2.3"}}
     "#,
     )
     .unwrap();
