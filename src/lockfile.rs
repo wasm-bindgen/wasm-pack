@@ -21,6 +21,29 @@ pub struct Lockfile {
 struct Package {
     name: String,
     version: String,
+    source: Option<String>,
+}
+
+/// A git-sourced lockfile package, e.g.
+/// `git+https://github.com/wasm-bindgen/wasm-bindgen?branch=main#<rev>`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct GitSource {
+    /// Repository URL, without cargo's `?branch=`/`?tag=`/`?rev=` query.
+    pub url: String,
+    /// The exact locked commit.
+    pub rev: String,
+}
+
+impl GitSource {
+    fn parse(source: &str) -> Option<GitSource> {
+        let rest = source.strip_prefix("git+")?;
+        let (url, rev) = rest.split_once('#')?;
+        let url = url.split_once('?').map_or(url, |(url, _)| url);
+        Some(GitSource {
+            url: url.to_string(),
+            rev: rev.to_string(),
+        })
+    }
 }
 
 impl Lockfile {
@@ -57,11 +80,49 @@ impl Lockfile {
         self.get_package_version("wasm-bindgen-test")
     }
 
+    /// The git source of the `wasm-bindgen` dependency, if it is not a
+    /// registry release. The matching CLI then has to be built from the same
+    /// revision.
+    pub fn wasm_bindgen_git_source(&self) -> Option<GitSource> {
+        self.get_package("wasm-bindgen")?
+            .source
+            .as_deref()
+            .and_then(GitSource::parse)
+    }
+
+    fn get_package(&self, package: &str) -> Option<&Package> {
+        self.package.iter().find(|p| p.name == package)
+    }
+
     fn get_package_version(&self, package: &str) -> Option<&str> {
-        self.package
-            .iter()
-            .find(|p| p.name == package)
-            .map(|p| &p.version[..])
+        self.get_package(package).map(|p| &p.version[..])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GitSource;
+
+    #[test]
+    fn parses_git_sources() {
+        let parsed = GitSource::parse(
+            "git+https://github.com/wasm-bindgen/wasm-bindgen?branch=main#0123abcd",
+        );
+        assert_eq!(
+            parsed,
+            Some(GitSource {
+                url: "https://github.com/wasm-bindgen/wasm-bindgen".into(),
+                rev: "0123abcd".into(),
+            })
+        );
+        assert_eq!(
+            GitSource::parse("git+https://example.com/repo#deadbeef").map(|s| s.url),
+            Some("https://example.com/repo".into())
+        );
+        assert_eq!(
+            GitSource::parse("registry+https://github.com/rust-lang/crates.io-index"),
+            None
+        );
     }
 }
 

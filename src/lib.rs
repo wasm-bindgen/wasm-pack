@@ -28,6 +28,7 @@ pub mod cache;
 pub mod child;
 pub mod command;
 pub mod emoji;
+pub mod emscripten;
 pub mod generate;
 pub mod install;
 pub mod license;

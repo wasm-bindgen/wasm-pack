@@ -5,6 +5,7 @@ use crate::build;
 use crate::cache;
 use crate::command::utils::{create_pkg_dir, get_crate_path};
 use crate::emoji;
+use crate::emscripten;
 use crate::install::{self, InstallMode, Tool};
 use crate::license;
 use crate::lockfile::Lockfile;
@@ -45,6 +46,9 @@ pub struct Build {
     pub panic_unwind: bool,
     target_triple: String,
     wasm_path: Option<String>,
+    emscripten_js: Option<PathBuf>,
+    emscripten_wasm: Option<PathBuf>,
+    emcc_env: emscripten::EmccEnv,
 }
 
 /// What sort of output we're going to be generating and flags we're invoking
@@ -67,6 +71,9 @@ pub enum Target {
     /// Correspond to `--target deno` where the output is natively usable as
     /// a Deno module loaded with `import`.
     Deno,
+    /// Correspond to `--target module` where the wasm is loaded via ESM
+    /// integration (source phase imports).
+    Module,
 }
 
 impl Default for Target {
@@ -83,6 +90,7 @@ impl fmt::Display for Target {
             Target::Nodejs => "nodejs",
             Target::NoModules => "no-modules",
             Target::Deno => "deno",
+            Target::Module => "module",
         };
         write!(f, "{}", s)
     }
@@ -97,6 +105,7 @@ impl FromStr for Target {
             "nodejs" => Ok(Target::Nodejs),
             "no-modules" => Ok(Target::NoModules),
             "deno" => Ok(Target::Deno),
+            "module" => Ok(Target::Module),
             _ => bail!("Unknown target: {}", s),
         }
     }
@@ -305,7 +314,15 @@ impl Build {
             extra_options,
             panic_unwind: build_opts.panic_unwind,
             wasm_path: None,
+            emscripten_js: None,
+            emscripten_wasm: None,
+            emcc_env: emscripten::EmccEnv::default(),
         })
+    }
+
+    /// Whether this build targets `wasm32-unknown-emscripten`.
+    fn is_emscripten(&self) -> bool {
+        self.target_triple.ends_with("-emscripten")
     }
 
     /// Configures the global binary cache used for this build
@@ -315,7 +332,17 @@ impl Build {
 
     /// Execute this `Build` command.
     pub fn run(&mut self) -> Result<()> {
-        let process_steps = Build::get_process_steps(self.mode, self.no_pack, self.no_opt);
+        let process_steps = if self.is_emscripten() {
+            if self.panic_unwind {
+                bail!(
+                    "--panic-unwind is not applicable to the emscripten target: \
+                     wasm32-unknown-emscripten builds with panic=unwind by default."
+                );
+            }
+            Build::get_process_steps_emscripten(self.mode, self.no_pack)
+        } else {
+            Build::get_process_steps(self.mode, self.no_pack, self.no_opt)
+        };
 
         let started = Instant::now();
 
@@ -389,6 +416,62 @@ impl Build {
         steps
     }
 
+    /// The step list for `wasm32-unknown-emscripten` builds.
+    ///
+    /// Emscripten builds are a single `cargo` invocation: rustc drives `emcc`
+    /// as the linker, and `-sWASM_BINDGEN` makes emcc run `wasm-bindgen`
+    /// itself as a post-link step (detected via the marker section wasm-bindgen
+    /// embeds when compiled for emscripten). wasm-pack's remaining job is to
+    /// supply a version-matched `wasm-bindgen` on `PATH`, inject the emcc
+    /// output-shape settings, and package the emitted `.js` + `.wasm`.
+    ///
+    /// There is no wasm-opt step: emcc runs its own optimization pipeline at
+    /// link time, driven by the rustc opt-level.
+    fn get_process_steps_emscripten(
+        mode: InstallMode,
+        no_pack: bool,
+    ) -> Vec<(&'static str, BuildStep)> {
+        macro_rules! steps {
+            ($($name:ident),+) => {
+                {
+                let mut steps: Vec<(&'static str, BuildStep)> = Vec::new();
+                    $(steps.push((stringify!($name), Build::$name));)*
+                        steps
+                    }
+                };
+            ($($name:ident,)*) => (steps![$($name),*])
+        }
+        let mut steps = Vec::new();
+        match &mode {
+            InstallMode::Force => {}
+            _ => {
+                steps.extend(steps![
+                    step_check_rustc_version,
+                    step_check_crate_config,
+                    step_check_for_wasm_target,
+                    step_check_for_emcc,
+                ]);
+            }
+        }
+
+        steps.extend(steps![
+            step_install_wasm_bindgen,
+            step_build_wasm_emscripten,
+            step_create_dir,
+            step_copy_emscripten_artifacts,
+        ]);
+
+        if !no_pack {
+            steps.extend(steps![
+                step_create_json,
+                step_copy_readme,
+                step_copy_license,
+            ]);
+        }
+
+        steps
+    }
+
     fn step_check_rustc_version(&mut self) -> Result<()> {
         // The stable rustc version is irrelevant when --panic-unwind is set,
         // since cargo will be invoked via `+nightly`.
@@ -405,8 +488,15 @@ impl Build {
 
     fn step_check_crate_config(&mut self) -> Result<()> {
         info!("Checking crate configuration...");
-        self.crate_data.check_crate_config()?;
+        self.crate_data.check_crate_config(self.is_emscripten())?;
         info!("Crate is correctly configured.");
+        Ok(())
+    }
+
+    fn step_check_for_emcc(&mut self) -> Result<()> {
+        info!("Checking for emcc...");
+        self.emcc_env = emscripten::ensure_emcc(&self.cache, self.mode.install_permitted())?;
+        info!("emcc is available.");
         Ok(())
     }
 
@@ -420,6 +510,60 @@ impl Build {
         info!("Checking for wasm-target...");
         build::wasm_target::check_for_wasm_target(&self.target_triple)?;
         info!("Checking for wasm-target was successful.");
+        Ok(())
+    }
+
+    fn step_build_wasm_emscripten(&mut self) -> Result<()> {
+        info!("Building wasm via emcc...");
+        let bindgen_bin =
+            install::get_tool_path(self.bindgen.as_ref().unwrap(), Tool::WasmBindgen)?
+                .binary(&Tool::WasmBindgen.to_string())?;
+        let bindgen_dir = bindgen_bin
+            .parent()
+            .ok_or_else(|| anyhow!("wasm-bindgen binary has no parent directory"))?;
+        let bin_name = self.crate_data.bin_name()?;
+        let link_args = emscripten_link_args(self.target)?;
+        let (js, wasm) = build::cargo_rustc_emscripten(
+            &self.crate_path,
+            self.profile.clone(),
+            &self.extra_options,
+            &self.target_triple,
+            &bin_name,
+            &link_args,
+            bindgen_dir,
+            &self.emcc_env,
+        )?;
+        info!("emcc output built at {js:#?} / {wasm:#?}.");
+        self.emscripten_js = Some(js);
+        self.emscripten_wasm = Some(wasm);
+        Ok(())
+    }
+
+    /// The pkg file names for the emscripten artifacts. The JS references the
+    /// wasm by its emitted filename, so the wasm always keeps its name;
+    /// `--out-name` renames only the JS entry point.
+    fn emscripten_pkg_file_names(&self) -> (String, String) {
+        let js = self.emscripten_js.as_ref().unwrap();
+        let wasm = self.emscripten_wasm.as_ref().unwrap();
+        let js_name = match &self.out_name {
+            Some(name) => format!("{}.js", name),
+            None => js.file_name().unwrap().to_string_lossy().into_owned(),
+        };
+        let wasm_name = wasm.file_name().unwrap().to_string_lossy().into_owned();
+        (js_name, wasm_name)
+    }
+
+    fn step_copy_emscripten_artifacts(&mut self) -> Result<()> {
+        info!("Copying emcc output to the pkg directory...");
+        let (js_name, wasm_name) = self.emscripten_pkg_file_names();
+        std::fs::copy(
+            self.emscripten_js.as_ref().unwrap(),
+            self.out_dir.join(js_name),
+        )?;
+        std::fs::copy(
+            self.emscripten_wasm.as_ref().unwrap(),
+            self.out_dir.join(wasm_name),
+        )?;
         Ok(())
     }
 
@@ -445,11 +589,15 @@ impl Build {
     }
 
     fn step_create_json(&mut self) -> Result<()> {
+        let emscripten_files = self
+            .is_emscripten()
+            .then(|| self.emscripten_pkg_file_names());
         self.crate_data.write_package_json(
             &self.out_dir,
             &self.scope,
             self.disable_dts,
             self.target,
+            emscripten_files,
         )?;
         info!(
             "Wrote a package.json at {:#?}.",
@@ -476,13 +624,23 @@ impl Build {
         info!("Identifying wasm-bindgen dependency...");
         let lockfile = Lockfile::new(&self.crate_data)?;
         let bindgen_version = lockfile.require_wasm_bindgen()?;
+        if self.is_emscripten() {
+            // The emscripten output mode (and the marker section emcc's
+            // `-sWASM_BINDGEN` detects) shipped in wasm-bindgen 0.2.122.
+            if let Ok(version) = semver::Version::parse(bindgen_version) {
+                if version < semver::Version::new(0, 2, 122) {
+                    bail!(
+                        "Targeting {} requires wasm-bindgen >= 0.2.122 (found {}). \
+                         Please update the wasm-bindgen dependency in your Cargo.toml.",
+                        self.target_triple,
+                        bindgen_version,
+                    );
+                }
+            }
+        }
         info!("Installing wasm-bindgen-cli...");
-        let bindgen = install::download_prebuilt_or_cargo_install(
-            Tool::WasmBindgen,
-            &self.cache,
-            bindgen_version,
-            self.mode.install_permitted(),
-        )?;
+        let bindgen =
+            install::wasm_bindgen_cli(&self.cache, &lockfile, self.mode.install_permitted())?;
         self.bindgen = Some(bindgen);
         info!("Installing wasm-bindgen-cli was successful.");
         Ok(())
@@ -507,7 +665,7 @@ impl Build {
     }
 
     fn step_run_wasm_opt(&mut self) -> Result<()> {
-        let mut args = match self
+        let args = match self
             .crate_data
             .configured_profile(self.profile.clone())
             .wasm_opt_args()
@@ -515,15 +673,6 @@ impl Build {
             Some(args) => args,
             None => return Ok(()),
         };
-        if self.reference_types {
-            args.push("--enable-reference-types".into());
-        }
-        if build::is_tier3_wasm(&self.target_triple) {
-            args.push("--enable-memory64".into());
-        }
-        if self.panic_unwind {
-            args.push("--enable-exception-handling".into());
-        }
         info!("executing wasm-opt with {:?}", args);
         wasm_opt::run(
             &self.cache,
@@ -536,6 +685,38 @@ impl Build {
             )
         })
     }
+}
+
+/// The emcc settings wasm-pack injects as final-crate link args.
+///
+/// These shape the output as a self-initializing ES module with wasm-bindgen
+/// run by emcc itself as a post-link step (`-sWASM_BINDGEN` detects the
+/// marker section wasm-bindgen embeds for the emscripten target). Users add
+/// their own settings (e.g. `-sSTACK_SIZE`) via `[target.<triple>] rustflags`
+/// in `.cargo/config.toml`; the two sets compose because these are passed as
+/// `cargo rustc` trailing args rather than through `RUSTFLAGS`.
+fn emscripten_link_args(target: Target) -> Result<Vec<String>> {
+    let mut args = vec![
+        "-Clink-arg=-sWASM_BINDGEN".to_string(),
+        "-Clink-arg=-sMODULARIZE=instance".to_string(),
+        "-Clink-arg=-sEXPORT_ES6".to_string(),
+        "-Clink-arg=-sAUTO_INIT".to_string(),
+        // Standard (exnref) exception handling, matching wasm-bindgen's own
+        // `-Cpanic=unwind` output. rustc's LLVM still emits the legacy
+        // instructions, so binaryen translates them at link.
+        "-Clink-arg=-sWASM_LEGACY_EXCEPTIONS=0".to_string(),
+        "-Clink-arg=-sBINARYEN_EXTRA_PASSES=--translate-to-exnref".to_string(),
+    ];
+    match target {
+        Target::Nodejs => args.push("-Clink-arg=-sENVIRONMENT=node".to_string()),
+        Target::Module => args.push("-Clink-arg=-sSOURCE_PHASE_IMPORTS".to_string()),
+        Target::NoModules => bail!(
+            "--target no-modules is not supported for the emscripten target: \
+             emcc emits an ES module. Use --target web instead."
+        ),
+        Target::Bundler | Target::Web | Target::Deno => {}
+    }
+    Ok(args)
 }
 
 /// Read the cargo `[build] target` setting from `.cargo/config.toml`.
