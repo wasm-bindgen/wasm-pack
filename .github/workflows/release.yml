@@ -286,31 +286,17 @@ jobs:
             --jq 'if .isDraft then .assets[].name else error("not a draft") end' | sort > uploaded
           diff expected uploaded
 
-  # The approval publishes the GitHub release first, since the npm package
-  # downloads its binary from the release, whose assets aren't public while
-  # it's a draft.
-  finalize:
-    name: Publish GitHub Release
-    environment:
-      name: publish
-    needs: release
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-  cargo-publish:
+  # The approval publishes to crates.io first, so the release, which is
+  # immutable once published, stays a draft if that fails.
+  publish:
     name: Publish to crates.io
     environment:
-      name: crate-publish
+      name: publish
+      deployment: false
     permissions:
       id-token: write
     if: github.repository == 'wasm-bindgen/wasm-pack'
-    needs:
-      - finalize
+    needs: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -321,34 +307,13 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
-  npm-publish:
-    name: Publish npm package
-    needs: finalize
-    # Requires the NPM_TOKEN repository secret.
-    if: ${{ github.repository == 'wasm-bindgen/wasm-pack' }}
+  finalize:
+    name: Publish GitHub Release
+    needs: publish
     permissions:
-      contents: read
-      id-token: write  # required for npm provenance
+      contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Sync npm package version to release tag
-        shell: bash
-        working-directory: npm
-        run: |
-          # Strip the leading "v" from the tag (e.g. "v0.14.1" -> "0.14.1").
-          version="${GITHUB_REF##*/v}"
-          echo "Publishing npm wasm-pack@${version}"
-          npm version --no-git-tag-version --allow-same-version "${version}"
-
-      - name: Publish to npm
-        working-directory: npm
-        run: npm publish --access public --provenance
+      - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

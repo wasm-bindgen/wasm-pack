@@ -23,8 +23,10 @@ Releases are automated, with maintainers reviewing each step:
   asset, then waits for approval of the `publish` environment. The site's
   installer already points at the new version from the merge, so approve
   promptly.
-1. Approval publishes the GitHub release and marks it as the latest, then
-  publishes to crates.io and npm. Releases are immutable once published.
+1. Approval publishes to crates.io, then publishes the GitHub release and
+  marks it as the latest. Releases are immutable once published.
+1. Publish the npm package from `npm/` with `npm publish`, which downloads its
+  binary from the now public GitHub release.
 
 To release by hand, make the same changes in a PR, merge it, and push the
 `v#.#.#` tag once the tests pass, if the Release tag workflow didn't.
