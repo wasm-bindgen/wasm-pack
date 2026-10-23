@@ -65,7 +65,9 @@ pub fn download_prebuilt_or_cargo_install(
     // `cargo install`, for example.
     if let Ok(path) = which(tool.to_string()) {
         debug!("found global {} binary at: {}", tool, path.display());
-        if check_version(&tool, &path, version)? {
+        if check_version(&tool, &path, version)?
+            || env::var("SKIP_VERSION_CHECK").map_or(false, |v| v == "1")
+        {
             let download = Download::at(path.parent().unwrap());
             return Ok(Status::Found(download));
         }
