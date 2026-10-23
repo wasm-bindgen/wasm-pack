@@ -54,10 +54,24 @@ pub fn copy_from_crate(crate_data: &CrateData, path: &Path, out_dir: &Path) -> R
 
             match license_files {
                 Ok(files) => {
+                    let files: Vec<_> = files
+                        .iter()
+                        .filter_map(|file| {
+                            let file = path.join(file);
+
+                            if file.is_file() {
+                                file.file_name().map(|file| file.to_os_string())
+                            } else {
+                                None
+                            }
+                        })
+                        .collect();
+
                     if files.is_empty() {
                         PBAR.info("License key is set in Cargo.toml but no LICENSE file(s) were found; Please add the LICENSE file(s) to your project directory");
                         return Ok(());
                     }
+
                     for license_file in files {
                         let crate_license_path = path.join(&license_file);
                         let new_license_path = out_dir.join(&license_file);
