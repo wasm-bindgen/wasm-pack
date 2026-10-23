@@ -37,12 +37,32 @@ If we look in that directory, we'll see the following:
 
 ## Add Your npm Package
 
-The scaffolded project includes an example WebAssembly package, `hello-wasm-pack`, in your
-`package.json`. Go into the `package.json` file, add your package, and remove the 
-`hello-wasm-pack` dependency from the `"dependencies"` section.
+The scaffolded project includes an example WebAssembly package, `hello-wasm-pack`.
+This package is listed in the `dependencies` array in your `package.json` file.
+Its files are stored in `node_packages/hello-wasm-pack`.
 
-Now, open up the `index.js` file. Replace the `hello-wasm-pack` in the first line with the
-name of your package:
+Use `npm` to remove the package:
+
+```
+npm remove hello-wasm-pack
+```
+
+Now add your compiled WebAssembly package:
+
+To add a local package:
+
+```
+npm link ../my-wasm-pack-package/pkg/
+```
+
+To add a published package from NPM servers:
+
+```
+npm install my-wasm-package
+```
+
+Now open the `index.js` file.
+Replace the `hello-wasm-pack` in the first line with the name of your package:
 
 ```js
 import * as wasm from "<your package name>";
