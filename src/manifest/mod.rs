@@ -413,7 +413,10 @@ impl CargoWasmPackProfile {
     pub fn wasm_opt_args(&self) -> Option<Vec<String>> {
         match self.wasm_opt.as_ref()? {
             CargoWasmPackProfileWasmOpt::Enabled(false) => None,
-            CargoWasmPackProfileWasmOpt::Enabled(true) => Some(vec!["-O".to_string()]),
+            CargoWasmPackProfileWasmOpt::Enabled(true) => Some(vec![
+                "-O".to_string(),
+                "--enable-mutable-globals".to_string(),
+            ]),
             CargoWasmPackProfileWasmOpt::ExplicitArgs(s) => Some(s.clone()),
         }
     }
