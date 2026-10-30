@@ -133,6 +133,18 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      # The npm package downloads its binary by this version, and npm is
+      # published last, after the crate and release can no longer change.
+      - name: Check npm package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(jq -r .version npm/package.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::npm/package.json is at $version, but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+
       - name: Read release notes
         id: notes
         shell: bash
@@ -286,34 +298,49 @@ jobs:
             --jq 'if .isDraft then .assets[].name else error("not a draft") end' | sort > uploaded
           diff expected uploaded
 
-  # The approval publishes to crates.io first, so the release, which is
-  # immutable once published, stays a draft if that fails.
+  # One approval publishes everything, the crate first, so the release, which
+  # is immutable once published, stays a draft if that fails, and npm last,
+  # since its package downloads the binary from the public release.
   publish:
-    name: Publish to crates.io
+    name: Publish
     environment:
       name: publish
       deployment: false
     permissions:
+      contents: write
       id-token: write
     if: github.repository == 'wasm-bindgen/wasm-pack'
     needs: release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
       - uses: rust-lang/crates-io-auth-action@v1
         id: auth
-      - run: cargo publish
+      # Skipped when a re-run of a later step finds it already published.
+      - shell: bash
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: |
+          if curl -fsS -o /dev/null -A "wasm-pack release (github.com/wasm-bindgen/wasm-pack)" \
+              "https://crates.io/api/v1/crates/wasm-pack/${GITHUB_REF_NAME#v}"; then
+            echo "wasm-pack ${GITHUB_REF_NAME#v} is already published"
+          else
+            cargo publish
+          fi
 
-  finalize:
-    name: Publish GitHub Release
-    needs: publish
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
       - run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
         env:
           GH_TOKEN: ${{ github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@11.6.2
+      - name: Publish to npm
+        working-directory: npm
+        run: npm publish --access public
