@@ -2,7 +2,35 @@
 
 ## 🤍 Unreleased
 
+## 🌷 0.15.1
+
+- ### ✨ Features
+
+  - **Add prebuilt Windows ARM binaries to releases - [6x68], [pull/1606]**
+
+    Releases now include a wasm-pack binary built for Windows on ARM64.
+
+    [pull/1606]: https://github.com/wasm-bindgen/wasm-pack/pull/1606
+    [6x68]: https://github.com/6x68
+
+  - **Add `--no-gitignore` flag - [NellowTCS], [pull/1590]**
+
+    Skips writing the `.gitignore` file into the output directory, so the generated package can be committed.
+
+    [pull/1590]: https://github.com/wasm-bindgen/wasm-pack/pull/1590
+    [NellowTCS]: https://github.com/NellowTCS
+
 - ### 🤕 Fixes
+
+  - **Read the `package.json` written by wasm-bindgen 0.2.94+ - [tomoyan596], [pull/1533]**
+
+    Since wasm-bindgen 0.2.94, the `package.json` it writes for the npm dependencies of JS
+    snippets has the form `{"dependencies": {...}}`. wasm-pack expected a flat map of names to
+    versions, so builds failed with `invalid type: map, expected a string`. Both forms are now
+    read, and the dependencies are merged into the generated `package.json`.
+
+    [pull/1533]: https://github.com/wasm-bindgen/wasm-pack/pull/1533
+    [tomoyan596]: https://github.com/tomoyan596
 
   - **Download prebuilt wasm-bindgen for every platform it is published for - [guybedford], [pull/1619]**
 
@@ -28,13 +56,57 @@
 
     [pull/1585]: https://github.com/wasm-bindgen/wasm-pack/pull/1585
 
-  - **Download prebuilt wasm-opt binary on Windows aarch64/arm64 - [pull/1605]**
+  - **Download prebuilt wasm-opt binary on Windows aarch64/arm64 - [gSys1337], [pull/1605]**
 
     wasm-pack now downloads prebuilt `wasm-opt` binaries for Windows on AARCH64/ARM64
     (`arm64-windows`) from Binaryen releases instead of failing with an
     unrecognized target error.
 
     [pull/1605]: https://github.com/wasm-bindgen/wasm-pack/pull/1605
+    [gSys1337]: https://github.com/gSys1337
+
+  - **Pass `--enable-exception-handling` to wasm-opt for `--panic-unwind` builds - [guybedford], [pull/1600]**
+
+    Previously this relied on Binaryen detecting the feature from the `target_features`
+    custom section, so the optimisation step failed if that section was stripped or an
+    older `wasm-opt` on `PATH` was used.
+
+    [pull/1600]: https://github.com/wasm-bindgen/wasm-pack/pull/1600
+    [guybedford]: https://github.com/guybedford
+
+  - **Update Binaryen to v130 - [divergentdave], [pull/1599]**
+
+    The bundled `wasm-opt` now accepts builds with the wide arithmetic target feature enabled.
+
+    [pull/1599]: https://github.com/wasm-bindgen/wasm-pack/pull/1599
+    [divergentdave]: https://github.com/divergentdave
+
+  - **Fix tier-3 target handling for wasm64 and bump Binaryen to v129 - [guybedford], [pull/1586]**
+
+    Building for `wasm64-unknown-unknown` no longer fails on `rustup target add`. wasm-pack
+    now resolves the target triple the same way cargo does, checks for a nightly toolchain
+    and installs `rust-src` for tier-3 wasm targets, and leaves `+nightly` and `-Z build-std`
+    to the project's `rust-toolchain.toml` and `.cargo/config.toml`. The bundled Binaryen
+    is bumped so `wasm-opt` accepts 64-bit memories and tables.
+
+    [pull/1586]: https://github.com/wasm-bindgen/wasm-pack/pull/1586
+
+  - **Bundle snippets - [coval3nte], [pull/1584]**
+
+    The generated `package.json` now lists the `snippets` directory in `files` when it
+    exists, so wasm-bindgen JS snippets are included in the published package.
+
+    [pull/1584]: https://github.com/wasm-bindgen/wasm-pack/pull/1584
+    [coval3nte]: https://github.com/coval3nte
+
+- ### 📖 Documentation
+
+  - **Document custom profile configuration for wasm-pack - [viandoxdev], [pull/1558]**
+
+    Documents the `Cargo.toml` wasm-pack configuration for custom profiles used with `--profile`.
+
+    [pull/1558]: https://github.com/wasm-bindgen/wasm-pack/pull/1558
+    [viandoxdev]: https://github.com/viandoxdev
 
 ## 🌷 0.15.0
 
