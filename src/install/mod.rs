@@ -174,7 +174,14 @@ fn prebuilt_url(tool: &Tool, version: &str) -> Result<String> {
 pub fn prebuilt_url_for(tool: &Tool, version: &str, arch: &Arch, os: &Os) -> Result<String> {
     let target = match (os, arch, tool) {
         (Os::Linux, Arch::AArch64, Tool::WasmOpt) => "aarch64-linux",
+        (Os::Linux, Arch::AArch64, Tool::WasmBindgen) if wasm_bindgen_since(version, 104) => {
+            "aarch64-unknown-linux-musl"
+        }
+        (Os::Linux, Arch::AArch64, Tool::CargoGenerate) => "aarch64-unknown-linux-musl",
         (Os::Linux, Arch::AArch64, _) => "aarch64-unknown-linux-gnu",
+        (Os::Linux, Arch::Riscv64, Tool::WasmBindgen) if wasm_bindgen_since(version, 127) => {
+            "riscv64gc-unknown-linux-gnu"
+        }
         (Os::Linux, Arch::X86_64, Tool::WasmOpt) => "x86_64-linux",
         (Os::Linux, Arch::X86_64, Tool::CargoGenerate) => "x86_64-unknown-linux-gnu",
         (Os::Linux, Arch::X86_64, _) => "x86_64-unknown-linux-musl",
@@ -185,6 +192,9 @@ pub fn prebuilt_url_for(tool: &Tool, version: &str, arch: &Arch, os: &Os) -> Res
         (Os::Windows, Arch::X86_64, Tool::WasmOpt) => "x86_64-windows",
         (Os::Windows, Arch::X86_64, _) => "x86_64-pc-windows-msvc",
         (Os::Windows, Arch::AArch64, Tool::WasmOpt) => "arm64-windows",
+        // wasm-bindgen and cargo-generate publish no Windows ARM64 builds, so
+        // use the x64 ones, which Windows 11 on ARM runs under emulation.
+        (Os::Windows, Arch::AArch64, _) => "x86_64-pc-windows-msvc",
         _ => bail!("Unrecognized target!"),
     };
     match tool {
@@ -210,6 +220,12 @@ pub fn prebuilt_url_for(tool: &Tool, version: &str, arch: &Arch, os: &Os) -> Res
             ))
         }
     }
+}
+
+/// Whether `version` is a wasm-bindgen release at or after 0.2.`patch`, for
+/// release targets that older versions don't publish.
+fn wasm_bindgen_since(version: &str, patch: u64) -> bool {
+    semver::Version::parse(version).is_ok_and(|v| v >= semver::Version::new(0, 2, patch))
 }
 
 /// Use `cargo install` to install the tool locally into the given

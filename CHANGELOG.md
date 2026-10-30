@@ -4,6 +4,15 @@
 
 - ### 🤕 Fixes
 
+  - **Download prebuilt wasm-bindgen for every platform it is published for - [guybedford], [pull/1619]**
+
+    On Windows ARM64, wasm-bindgen and cargo-generate are now downloaded as their x64 builds,
+    which run under emulation, instead of being built from source. Linux ARM64 downloads
+    the static musl build of wasm-bindgen (0.2.104+) and cargo-generate, so they also run on
+    musl hosts, and Linux RISC-V 64 downloads the prebuilt wasm-bindgen (0.2.127+).
+
+    [pull/1619]: https://github.com/wasm-bindgen/wasm-pack/pull/1619
+
   - **Drop 32-bit Linux geckodriver support - [guybedford], [pull/1595]**
 
     Mozilla discontinued 32-bit (x86) Linux geckodriver builds in v0.37.0, so the

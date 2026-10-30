@@ -99,12 +99,17 @@ fn wasm_opt_prebuilt_url_is_pinned_version() {
 fn all_latest_tool_download_urls_valid() {
     let mut errors = Vec::new();
 
-    for tool in [Tool::CargoGenerate, Tool::WasmBindgen, Tool::WasmOpt] {
-        for arch in [Arch::X86_64, Arch::X86, Arch::AArch64] {
+    for (tool, version) in [
+        (Tool::CargoGenerate, "latest"),
+        (Tool::WasmBindgen, "0.2.92"),
+        (Tool::WasmBindgen, "0.2.129"),
+        (Tool::WasmOpt, "latest"),
+    ] {
+        for arch in [Arch::X86_64, Arch::X86, Arch::AArch64, Arch::Riscv64] {
             for os in [Os::Linux, Os::MacOS, Os::Windows] {
                 // For all valid tool, arch & os combinations,
                 // error out when any of them is a 404 or similar
-                if let Ok(url) = install::prebuilt_url_for(&tool, "0.2.92", &arch, &os) {
+                if let Ok(url) = install::prebuilt_url_for(&tool, version, &arch, &os) {
                     // Use HTTP HEAD instead of GET to avoid fetching lots of stuff
                     let res = ureq::head(&url).call().unwrap();
                     let status = res.status();
@@ -125,6 +130,58 @@ fn all_latest_tool_download_urls_valid() {
         panic!(
             "Some URLs for prebuild tools were unavailable:\n{}",
             errors.join("\n")
+        );
+    }
+}
+
+#[test]
+fn wasm_bindgen_prebuilt_targets_follow_release_artifacts() {
+    let target = |version, arch, os| {
+        install::prebuilt_url_for(&Tool::WasmBindgen, version, &arch, &os)
+            .ok()
+            .map(|url| {
+                url.trim_end_matches(".tar.gz")
+                    .rsplit(&format!("{}-", version))
+                    .next()
+                    .unwrap()
+                    .to_string()
+            })
+    };
+    let cases = [
+        (
+            "0.2.103",
+            Arch::AArch64,
+            Os::Linux,
+            Some("aarch64-unknown-linux-gnu"),
+        ),
+        (
+            "0.2.104",
+            Arch::AArch64,
+            Os::Linux,
+            Some("aarch64-unknown-linux-musl"),
+        ),
+        ("0.2.126", Arch::Riscv64, Os::Linux, None),
+        (
+            "0.2.127",
+            Arch::Riscv64,
+            Os::Linux,
+            Some("riscv64gc-unknown-linux-gnu"),
+        ),
+        (
+            "0.2.129",
+            Arch::AArch64,
+            Os::Windows,
+            Some("x86_64-pc-windows-msvc"),
+        ),
+    ];
+    for (version, arch, os, expected) in cases {
+        assert_eq!(
+            target(version, arch.clone(), os.clone()).as_deref(),
+            expected,
+            "wasm-bindgen {} on {} {}",
+            version,
+            os,
+            arch
         );
     }
 }
