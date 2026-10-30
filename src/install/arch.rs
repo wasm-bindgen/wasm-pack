@@ -12,6 +12,8 @@ pub enum Arch {
     X86,
     /// ARM 64-bit
     AArch64,
+    /// RISC-V 64-bit
+    Riscv64,
 }
 
 impl Arch {
@@ -23,6 +25,8 @@ impl Arch {
             Ok(Arch::X86)
         } else if target::aarch64 {
             Ok(Arch::AArch64)
+        } else if target::riscv64 {
+            Ok(Arch::Riscv64)
         } else {
             bail!("Unrecognized target!")
         }
@@ -35,6 +39,7 @@ impl fmt::Display for Arch {
             Arch::X86_64 => "x86-64",
             Arch::X86 => "x86",
             Arch::AArch64 => "aarch64",
+            Arch::Riscv64 => "riscv64",
         };
         write!(f, "{}", s)
     }

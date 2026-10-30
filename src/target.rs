@@ -15,3 +15,5 @@ pub const x86_64: bool = cfg!(target_arch = "x86_64");
 pub const x86: bool = cfg!(target_arch = "x86");
 #[allow(non_upper_case_globals)]
 pub const aarch64: bool = cfg!(target_arch = "aarch64");
+#[allow(non_upper_case_globals)]
+pub const riscv64: bool = cfg!(target_arch = "riscv64");
