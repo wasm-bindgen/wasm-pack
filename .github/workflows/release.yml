@@ -298,9 +298,6 @@ jobs:
             --jq 'if .isDraft then .assets[].name else error("not a draft") end' | sort > uploaded
           diff expected uploaded
 
-  # One approval publishes everything, the crate first, so the release, which
-  # is immutable once published, stays a draft if that fails, and npm last,
-  # since its package downloads the binary from the public release.
   # GitHub's own notice of a pending approval is easy to miss, so the release
   # PR, whose participants are notified, gets a comment while the publish job
   # waits.
@@ -330,6 +327,9 @@ jobs:
 
           Release: $url"
 
+  # One approval publishes everything, the crate first, so the release, which
+  # is immutable once published, stays a draft if that fails, and npm last,
+  # since its package downloads the binary from the public release.
   publish:
     name: Publish
     environment:
