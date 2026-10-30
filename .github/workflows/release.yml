@@ -133,6 +133,18 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      # The npm package downloads its binary by this version, and npm is
+      # published last, after the crate and release can no longer change.
+      - name: Check npm package version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(jq -r .version npm/package.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::npm/package.json is at $version, but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+
       - name: Read release notes
         id: notes
         shell: bash
@@ -331,12 +343,4 @@ jobs:
       - run: npm install -g npm@11.6.2
       - name: Publish to npm
         working-directory: npm
-        shell: bash
-        run: |
-          set -euo pipefail
-          version=$(node -p 'require("./package.json").version')
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::npm/package.json is at $version, but the tag is $GITHUB_REF_NAME"
-            exit 1
-          fi
-          npm publish --access public
+        run: npm publish --access public
