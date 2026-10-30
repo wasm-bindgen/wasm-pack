@@ -108,6 +108,16 @@
     [pull/1558]: https://github.com/wasm-bindgen/wasm-pack/pull/1558
     [viandoxdev]: https://github.com/viandoxdev
 
+  - **Report a wasm-pack option that ends up in the cargo pass-through - [pull/1616]**
+
+    `build` takes `allow_hyphen_values` and `trailing_var_arg`, so an option written
+    after one cargo owns (`--features`, typically) is handed to cargo, where it is
+    either rejected or read as something else: `wasm-pack build --features foo
+    --target web` failed with a message about an unknown Rust target. Such an option
+    is now reported by name, with the order that works.
+
+    [pull/1616]: https://github.com/wasm-bindgen/wasm-pack/pull/1616
+
 ## 🌷 0.15.0
 
 - ### ✨ Features
