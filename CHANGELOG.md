@@ -22,6 +22,16 @@
 
 - ### 🤕 Fixes
 
+  - **Read the `package.json` written by wasm-bindgen 0.2.94+ - [tomoyan596], [pull/1533]**
+
+    Since wasm-bindgen 0.2.94, the `package.json` it writes for the npm dependencies of JS
+    snippets has the form `{"dependencies": {...}}`. wasm-pack expected a flat map of names to
+    versions, so builds failed with `invalid type: map, expected a string`. Both forms are now
+    read, and the dependencies are merged into the generated `package.json`.
+
+    [pull/1533]: https://github.com/wasm-bindgen/wasm-pack/pull/1533
+    [tomoyan596]: https://github.com/tomoyan596
+
   - **Download prebuilt wasm-bindgen for every platform it is published for - [guybedford], [pull/1619]**
 
     On Windows ARM64, wasm-bindgen and cargo-generate are now downloaded as their x64 builds,
