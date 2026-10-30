@@ -657,3 +657,37 @@ fn it_doesnt_recurse_up_the_path_to_find_cargo_toml_when_default() {
     let crate_data = manifest::CrateData::new(&path, None);
     assert!(crate_data.is_err());
 }
+
+fn write_package_json_over(existing: &str) -> Option<HashMap<String, String>> {
+    let fixture = fixture::js_hello_world();
+    let out_dir = fixture.path.join("pkg");
+    let crate_data = manifest::CrateData::new(&fixture.path, None).unwrap();
+    fs::create_dir_all(&out_dir).unwrap();
+    fs::write(out_dir.join("package.json"), existing).unwrap();
+    crate_data
+        .write_package_json(&out_dir, &None, false, Target::Bundler)
+        .unwrap();
+    utils::manifest::read_package_json(&fixture.path, &out_dir)
+        .unwrap()
+        .dependencies
+}
+
+#[test]
+fn it_merges_wasm_bindgen_package_json_dependencies() {
+    let deps = write_package_json_over(r#"{"dependencies": {"demo-pad": "^1.0.0"}}"#).unwrap();
+    assert_eq!(deps.len(), 1);
+    assert_eq!(deps["demo-pad"], "^1.0.0");
+}
+
+#[test]
+fn it_merges_legacy_wasm_bindgen_package_json_dependencies() {
+    let deps = write_package_json_over(r#"{"demo-pad": "^1.0.0"}"#).unwrap();
+    assert_eq!(deps.len(), 1);
+    assert_eq!(deps["demo-pad"], "^1.0.0");
+}
+
+#[test]
+fn it_ignores_wasm_bindgen_package_json_without_dependencies() {
+    let deps = write_package_json_over(r#"{"type": "module", "dependencies": {}}"#);
+    assert!(deps.is_none());
+}

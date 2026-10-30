@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::manifest::npm::repository::Repository;
 
@@ -24,5 +24,5 @@ pub struct CommonJSPackage {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keywords: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub dependencies: Option<HashMap<String, String>>,
+    pub dependencies: Option<BTreeMap<String, String>>,
 }
