@@ -62,6 +62,7 @@
     older `wasm-opt` on `PATH` was used.
 
     [pull/1600]: https://github.com/wasm-bindgen/wasm-pack/pull/1600
+    [guybedford]: https://github.com/guybedford
 
   - **Update Binaryen to v130 - [divergentdave], [pull/1599]**
 
