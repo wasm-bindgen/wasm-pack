@@ -4,7 +4,7 @@
 
 - ### 🤕 Fixes
 
-  - **Install the native Apple Silicon build with the installer script - [MattiasBuelens], [issue/1442] [pull/1623]**
+  - **Install the native Apple Silicon build with the installer script - [MattiasBuelens], [issue/1442], [pull/1623]**
 
     The `init.sh` installer always installed the x86_64 build of wasm-pack on Apple Silicon Macs,
     which then also downloaded x86_64 builds of wasm-bindgen. Under Rosetta, `wasm-pack test --safari`
