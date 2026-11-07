@@ -2,6 +2,20 @@
 
 ## 🤍 Unreleased
 
+- ### 🤕 Fixes
+
+  - **Install the native Apple Silicon build with the installer script - [MattiasBuelens], [issue/1442] [pull/1623]**
+
+    The `init.sh` installer always installed the x86_64 build of wasm-pack on Apple Silicon Macs,
+    which then also downloaded x86_64 builds of wasm-bindgen. Under Rosetta, `wasm-pack test --safari`
+    could time out waiting for safaridriver to start. The installer now installs the
+    `aarch64-apple-darwin` build, and only falls back to `x86_64-apple-darwin` for older releases
+    that don't have one.
+
+    [issue/1442]: https://github.com/wasm-bindgen/wasm-pack/issues/1442
+    [pull/1623]: https://github.com/wasm-bindgen/wasm-pack/pull/1623
+    [MattiasBuelens]: https://github.com/MattiasBuelens
+
 ## 🌷 0.15.1
 
 - ### ✨ Features
