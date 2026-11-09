@@ -170,8 +170,6 @@ This flag:
 - Adds `-Z build-std=std,panic_unwind` to rebuild `std` with unwinding
   support.
 - Sets `RUSTFLAGS=-Cpanic=unwind` (preserving any user-provided `RUSTFLAGS`).
-- Passes `--enable-exception-handling` to `wasm-opt` so the optimiser accepts
-  the exception-handling instructions unwinding compiles to.
 
 The first time you use `--panic-unwind`, `wasm-pack` will install any missing
 prerequisites via `rustup`:
@@ -248,8 +246,10 @@ it sees a `wasm64-*` triple:
   if missing.
 - Does **not** attempt `rustup target add wasm64-*` (which would always
   fail for a tier-3 target).
-- Passes `--enable-memory64` to `wasm-opt` so the optimiser accepts
-  64-bit memories and tables.
+
+`wasm-opt` is invoked with the full Wasm 3.0 feature set enabled, so
+modules using memory64, exception-handling, GC, and the other standard
+features validate without extra configuration.
 
 [tier-3]: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 

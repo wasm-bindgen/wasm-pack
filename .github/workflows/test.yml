@@ -54,3 +54,40 @@ jobs:
         run: cargo clippy
       - name: Cargo fmt
         run: cargo fmt --all -- --check
+
+  test-emscripten:
+    name: Test (emscripten)
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-emscripten
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "24"
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            target
+          key: ${{ runner.os }}-emscripten-${{ hashFiles('Cargo.lock') }}
+      # No emsdk setup: the runners have no emcc, so this exercises
+      # wasm-pack's own Emscripten toolchain auto-install into the test
+      # cache (target/test_cache, persisted by the cache step above).
+      - name: Run emscripten tests
+        shell: bash
+        # Single-threaded: parallel fixtures race the shared tool cache
+        # (cargo-install fallback renames into the same directory).
+        run: "cargo test --test all emscripten:: --locked -- --test-threads=1"
+        env:
+          RUST_BACKTRACE: 1
+          WASM_PACK_TEST_EMSCRIPTEN: "1"

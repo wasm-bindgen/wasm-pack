@@ -12,6 +12,7 @@
   - [`test`](./commands/test.md)
   - [`pack` and `publish`](./commands/pack-and-publish.md)
   - [`init` (DEPRECATED)](./commands/init.md)
+- [Emscripten target](./emscripten-target.md)
 - [Tutorials](./tutorials/index.md)
   - [Hybrid applications with Webpack](./tutorials/hybrid-applications-with-webpack/index.md)
     - [Getting started](./tutorials/hybrid-applications-with-webpack/getting-started.md)

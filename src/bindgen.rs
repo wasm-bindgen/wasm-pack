@@ -121,6 +121,9 @@ fn build_target_arg_legacy(target: Target, cli_path: &Path) -> Result<String> {
         }
         Target::Bundler => "--browser",
         Target::Deno => "--deno",
+        Target::Module => {
+            bail!("The 'module' target requires a newer version of wasm-bindgen. Please update your project to wasm-bindgen version >= 0.2.40.")
+        }
     };
     Ok(target_arg.to_string())
 }

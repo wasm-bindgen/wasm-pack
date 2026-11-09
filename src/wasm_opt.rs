@@ -29,13 +29,42 @@ pub fn run(cache: &Cache, out_dir: &Path, args: &[String], install_permitted: bo
 
         let tmp = path.with_extension("wasm-opt.wasm");
         let mut cmd = Command::new(&wasm_opt_path);
-        cmd.arg(&path).arg("-o").arg(&tmp).args(args);
+        cmd.arg(&path).arg("-o").arg(&tmp);
+        // Enable the full Wasm 3.0 feature set so that modules using
+        // exception-handling, bulk-memory, tail-call, GC, etc. validate. The
+        // user's configured args are appended last so they can still override.
+        for feature in WASM_3_FEATURES {
+            cmd.arg(format!("--enable-{feature}"));
+        }
+        cmd.args(args);
         child::run(cmd, "wasm-opt")?;
         std::fs::rename(&tmp, &path)?;
     }
 
     Ok(())
 }
+
+/// Features that comprise the Wasm 3.0 standard. Passed to `wasm-opt` so that
+/// any module conforming to Wasm 3.0 validates.
+const WASM_3_FEATURES: &[&str] = &[
+    // Wasm 2.0
+    "multivalue",
+    "reference-types",
+    "bulk-memory",
+    "sign-ext",
+    "nontrapping-float-to-int",
+    "mutable-globals",
+    "simd",
+    // Wasm 3.0
+    "tail-call",
+    "exception-handling",
+    "gc",
+    "memory64",
+    "multimemory",
+    "extended-const",
+    "relaxed-simd",
+    "threads",
+];
 
 /// Attempts to find `wasm-opt` in `PATH` locally, or failing that downloads a
 /// precompiled binary.
