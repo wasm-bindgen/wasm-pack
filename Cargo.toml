@@ -12,7 +12,7 @@ documentation = "https://wasm-bindgen.github.io/wasm-pack/"
 
 [dependencies]
 anyhow = "1.0.100"
-binary-install = "0.4.1"
+binary-install = "0.6.1"
 cargo_metadata = "0.23.1"
 chrono = "0.4.42"
 console = "0.16.1"

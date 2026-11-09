@@ -2,6 +2,13 @@
 
 ## 🤍 Unreleased
 
+- ### 🛠️ Maintenance
+
+  - **Bump binary-install from 0.4.1 to 0.6.1 - [drager], [pull/1624]**
+
+    [pull/1624]: https://github.com/wasm-bindgen/wasm-pack/pull/1624
+    [drager]: https://github.com/drager
+
 ## 🌷 0.15.1
 
 - ### ✨ Features
