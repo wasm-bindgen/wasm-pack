@@ -106,7 +106,18 @@ main() {
 
     ensure mkdir -p "$_dir"
     downloader "$_url" "$_file"
-    if [ $? != 0 ]; then
+    _status=$?
+    if [ $_status != 0 ] && [ "$_arch" = "aarch64-apple-darwin" ]; then
+        # Older releases don't have a native Apple Silicon build.
+        # Fall back to the x86_64 build, which runs under Rosetta.
+        say "no aarch64-apple-darwin build found for $VERSION, falling back to x86_64-apple-darwin"
+        _arch="x86_64-apple-darwin"
+        _tardir="wasm-pack-$VERSION-${_arch}"
+        _url="$UPDATE_ROOT/${_tardir}.tar.gz"
+        downloader "$_url" "$_file"
+        _status=$?
+    fi
+    if [ $_status != 0 ]; then
       say "failed to download $_url"
       say "this may be a standard network error, but it may also indicate"
       say "that wasm-pack's release process is not working. When in doubt"
@@ -186,11 +197,6 @@ get_architecture() {
             err "no precompiled binaries available for CPU architecture: $_cputype"
 
     esac
-
-    # See https://github.com/wasm-bindgen/wasm-pack/pull/1088
-    if [ "$_cputype" = "aarch64" ] && [ "$_ostype" = "apple-darwin" ]; then
-        _cputype="x86_64"
-    fi
 
     _arch="$_cputype-$_ostype"
 
