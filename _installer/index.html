@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <title>wasm-pack</title>
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="../public/custom.css" />
+  <style>
+    .winlink {
+      display: block;
+    }
+  </style>
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png" />
+  <link rel="manifest" href="../site.webmanifest" />
+  <link rel="mask-icon" href="../safari-pinned-tab.svg" color="#5bbad5" />
+  <meta name="msapplication-TileColor" content="#00aba9" />
+  <meta name="theme-color" content="#ffffff" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <ul class="navbar-list">
+        <li class="navbar-logo">
+          <a href="/wasm-pack">
+            <img src="../public/img/rustwasm.png" />
+          </a>
+        </li>
+        <li class="navbar-item">
+          <a href="https://github.com/wasm-bindgen/wasm-pack/issues/new/choose"
+            >File an Issue</a
+          >
+        </li>
+        <li class="navbar-item">
+          <a href="/wasm-pack/book">Documentation</a>
+        </li>
+        <li class="navbar-item">
+          <a href="/wasm-pack/installer">Install</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <section id="installer">
+    <img src="../public/img/wasm-ferris.png" />
+    <h1>Install <code>wasm-pack</code></h1>
+    <div class="container">
+      <div id="platform-instructions-unix" style="display: none">
+        <p>
+          You appear to be running a *nix system (Unix, Linux, MacOS). Install
+          by running:
+        </p>
+        <pre class="primary">
+curl https://wasm-bindgen.github.io/wasm-pack/installer/init.sh -sSf | sh</pre
+        >
+        <p>
+          If you're not on *nix, or you don't like installing from <b>curl</b>,
+          follow the alternate instructions below.
+        </p>
+      </div>
+
+      <div id="platform-instructions-win64" style="display: none">
+        <p>
+          You appear to be running Windows 64-bit. Download and run
+          <a
+            class="winlink"
+            href="https://github.com/wasm-bindgen/wasm-pack/releases/download/@@WASM_PACK_VERSION@@/wasm-pack-init.exe"
+            >wasm-pack-init.exe</a
+          >
+          then follow the onscreen instructions.
+        </p>
+        <hr />
+        <p>
+          If you're a Windows Subsystem for Linux user, run the following in
+          your terminal, then follow the onscreen instructions to install
+          wasm-pack.
+        </p>
+        <pre class="primary">
+curl https://wasm-bindgen.github.io/wasm-pack/installer/init.sh -sSf | sh</pre
+        >
+        <p>
+          If you're not on Windows 64-bit, follow the alternate instructions
+          below.
+        </p>
+      </div>
+
+      <div id="platform-instructions-unknown" style="display: none">
+        <p>I don't recognize your platform.</p>
+        <p>
+          We would appreciate it if you
+          <a href="https://github.com/wasm-bindgen/wasm-pack/issues/new"
+            >reported an issue</a
+          >, along with the following values:
+        </p>
+        <div>
+          <div>navigator.platform:</div>
+          <div id="nav-plat"></div>
+          <div>navigator.appVersion:</div>
+          <div id="nav-app"></div>
+        </div>
+      </div>
+
+      <hr />
+
+      <div id="generic-instructions">
+        <p>To install from source on any platform:</p>
+        <p><code>cargo install wasm-pack</code></p>
+        <p>
+          On supported platforms, you can also use <b>npm</b> or <b>yarn</b> to
+          download a precompiled binary:
+        </p>
+        <p>
+          <code>npm install -g wasm-pack</code> or
+          <code>yarn global add wasm-pack</code>
+        </p>
+      </div>
+    </div>
+  </section>
+  <script type="text/javascript" src="wasm-pack.js"></script>
+</body>
