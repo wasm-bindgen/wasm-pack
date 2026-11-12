@@ -128,6 +128,11 @@ pub struct BuildOptions {
     #[clap(long = "scope", short = 's')]
     pub scope: Option<String>,
 
+    /// The npm package name to use in package.json, instead of the crate name.
+    /// Combined with `--scope` if both are set.
+    #[clap(long = "package-name")]
+    pub package_name: Option<String>,
+
     #[clap(long = "mode", short = 'm', default_value = "normal")]
     /// Sets steps to be run. [possible values: no-install, normal, force]
     pub mode: InstallMode,
@@ -208,6 +213,7 @@ impl Default for BuildOptions {
         Self {
             path: None,
             scope: None,
+            package_name: None,
             mode: InstallMode::default(),
             disable_dts: false,
             no_gitignore: false,
@@ -243,8 +249,11 @@ impl Build {
             }
         }
         let crate_path = get_crate_path(build_opts.path)?;
-        let crate_data = manifest::CrateData::new(&crate_path, build_opts.out_name.clone())?;
         let out_dir = crate_path.join(PathBuf::from(build_opts.out_dir)).clean();
+
+        let mut crate_data = manifest::CrateData::new(&crate_path, build_opts.out_name.clone())?;
+        crate_data.set_package_name(build_opts.package_name.clone());
+        crate_data.npm_name(&build_opts.scope)?;
 
         let dev = build_opts.dev || build_opts.debug;
         let profile = match (

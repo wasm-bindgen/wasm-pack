@@ -58,6 +58,7 @@ pub struct CrateData {
     current_idx: usize,
     manifest: CargoManifest,
     out_name: Option<String>,
+    package_name: Option<String>,
 }
 
 #[doc(hidden)]
@@ -84,6 +85,9 @@ struct CargoMetadata {
 struct CargoWasmPack {
     #[serde(default)]
     profile: CargoWasmPackProfiles,
+
+    #[serde(default, rename = "package-name")]
+    package_name: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -489,6 +493,7 @@ impl CrateData {
             manifest,
             current_idx,
             out_name,
+            package_name: None,
         })
     }
 
@@ -601,6 +606,47 @@ impl CrateData {
         }
     }
 
+    /// Override the npm package name configured by
+    /// `package.metadata.wasm-pack.package-name` in `Cargo.toml`.
+    pub fn set_package_name(&mut self, package_name: Option<String>) {
+        self.package_name = package_name;
+    }
+
+    /// Get the `name` to write to `package.json`.
+    pub fn npm_name(&self, scope: &Option<String>) -> Result<String> {
+        let package_name = self.package_name.as_ref().or(self
+            .manifest
+            .package
+            .metadata
+            .wasm_pack
+            .package_name
+            .as_ref());
+
+        let package_name = match package_name {
+            Some(name) => name,
+            None => {
+                let name = &self.pkg().name;
+                return Ok(match scope {
+                    Some(s) => format!("@{}/{}", s, name),
+                    None => name.to_string(),
+                });
+            }
+        };
+
+        let npm_name = match scope {
+            Some(s) if package_name.starts_with('@') => bail!(
+                "package name `{}` already has a scope, so it can't be combined \
+                 with `--scope {}`",
+                package_name,
+                s
+            ),
+            Some(s) => format!("@{}/{}", s, package_name),
+            None => package_name.clone(),
+        };
+        validate_npm_name(&npm_name)?;
+        Ok(npm_name)
+    }
+
     /// Get the prefix for output file names
     pub fn name_prefix(&self) -> String {
         match &self.out_name {
@@ -659,12 +705,12 @@ impl CrateData {
         } else {
             None
         };
+        let name = self.npm_name(scope)?;
         let npm_data = match target {
-            Target::Nodejs => self.to_commonjs(scope, disable_dts, existing_deps, out_dir),
-            Target::NoModules => self.to_nomodules(scope, disable_dts, existing_deps, out_dir),
-            Target::Bundler => self.to_esmodules(scope, disable_dts, existing_deps, out_dir),
-            Target::Web => self.to_web(scope, disable_dts, existing_deps, out_dir),
-            // Deno does not need package.json
+            Target::Nodejs => self.to_commonjs(name, disable_dts, existing_deps, out_dir),
+            Target::NoModules => self.to_nomodules(name, disable_dts, existing_deps, out_dir),
+            Target::Bundler => self.to_esmodules(name, disable_dts, existing_deps, out_dir),
+            Target::Web => self.to_web(name, disable_dts, existing_deps, out_dir),
             Target::Deno => return Ok(()),
         };
 
@@ -677,7 +723,7 @@ impl CrateData {
 
     fn npm_data(
         &self,
-        scope: &Option<String>,
+        name: String,
         add_js_bg_to_package_json: bool,
         disable_dts: bool,
         out_dir: &Path,
@@ -693,12 +739,6 @@ impl CrateData {
             files.push(js_bg_file);
         }
 
-        let pkg = &self.data.packages[self.current_idx];
-        let npm_name = match scope {
-            Some(s) => format!("@{}/{}", s, pkg.name),
-            None => pkg.name.to_string(),
-        };
-
         let dts_file = if !disable_dts {
             let file = format!("{}.d.ts", name_prefix);
             files.push(file.to_string());
@@ -707,6 +747,7 @@ impl CrateData {
             None
         };
 
+        let pkg = &self.data.packages[self.current_idx];
         let keywords = if pkg.keywords.len() > 0 {
             Some(pkg.keywords.clone())
         } else {
@@ -730,7 +771,7 @@ impl CrateData {
         }
 
         NpmData {
-            name: npm_name,
+            name,
             dts_file,
             files,
             main: js_file,
@@ -750,12 +791,12 @@ impl CrateData {
 
     fn to_commonjs(
         &self,
-        scope: &Option<String>,
+        name: String,
         disable_dts: bool,
         dependencies: Option<BTreeMap<String, String>>,
         out_dir: &Path,
     ) -> NpmPackage {
-        let data = self.npm_data(scope, false, disable_dts, out_dir);
+        let data = self.npm_data(name, false, disable_dts, out_dir);
         let pkg = &self.data.packages[self.current_idx];
 
         self.check_optional_fields();
@@ -781,12 +822,12 @@ impl CrateData {
 
     fn to_esmodules(
         &self,
-        scope: &Option<String>,
+        name: String,
         disable_dts: bool,
         dependencies: Option<BTreeMap<String, String>>,
         out_dir: &Path,
     ) -> NpmPackage {
-        let data = self.npm_data(scope, true, disable_dts, out_dir);
+        let data = self.npm_data(name, true, disable_dts, out_dir);
         let pkg = &self.data.packages[self.current_idx];
 
         self.check_optional_fields();
@@ -814,12 +855,12 @@ impl CrateData {
 
     fn to_web(
         &self,
-        scope: &Option<String>,
+        name: String,
         disable_dts: bool,
         dependencies: Option<BTreeMap<String, String>>,
         out_dir: &Path,
     ) -> NpmPackage {
-        let data = self.npm_data(scope, false, disable_dts, out_dir);
+        let data = self.npm_data(name, false, disable_dts, out_dir);
         let pkg = &self.data.packages[self.current_idx];
 
         self.check_optional_fields();
@@ -847,12 +888,12 @@ impl CrateData {
 
     fn to_nomodules(
         &self,
-        scope: &Option<String>,
+        name: String,
         disable_dts: bool,
         dependencies: Option<BTreeMap<String, String>>,
         out_dir: &Path,
     ) -> NpmPackage {
-        let data = self.npm_data(scope, false, disable_dts, out_dir);
+        let data = self.npm_data(name, false, disable_dts, out_dir);
         let pkg = &self.data.packages[self.current_idx];
 
         self.check_optional_fields();
@@ -895,4 +936,53 @@ impl CrateData {
             _ => ()
         };
     }
+}
+
+/// Check `name` against the npm rules for new package names.
+///
+/// Matches the rules from the official `validate-npm-package-name` package:
+/// - must have a length of at least 1 character
+/// - must have a length of at most 214 characters
+/// - must consist of lowercase letters, digits, `-`, `.`, and `_` only
+/// - must not start with `.` or `_`
+///
+/// Does not validate against reserved names of Node.js core modules.
+///
+/// A scoped name (`@<scope>/<name>`) is checked part by part.
+fn validate_npm_name(name: &str) -> Result<()> {
+    if name.len() > 214 {
+        bail!("invalid npm package name `{name}`: must be at most 214 characters");
+    }
+
+    let parts: Vec<&str> = match name.strip_prefix('@') {
+        Some(scoped) => match scoped.split_once('/') {
+            Some((scope, pkg)) => vec![scope, pkg],
+            None => bail!(
+                "invalid npm package name `{name}`: scoped names must look like `@scope/name`"
+            ),
+        },
+        None => vec![name],
+    };
+
+    for part in parts {
+        if part.is_empty() {
+            bail!("invalid npm package name `{name}`: empty name or scope");
+        }
+
+        if part.starts_with('.') || part.starts_with('_') {
+            bail!("invalid npm package name `{name}`: can't start with `.` or `_`");
+        }
+
+        if let Some(c) = part
+            .chars()
+            .find(|c| !matches!(c, 'a'..='z' | '0'..='9' | '-' | '.' | '_'))
+        {
+            bail!(
+                "invalid npm package name `{name}`: character `{c}` is not allowed; \
+                 use lowercase letters, digits, `-`, `.` or `_`"
+            );
+        }
+    }
+
+    Ok(())
 }
