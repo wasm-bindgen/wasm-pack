@@ -229,11 +229,72 @@ impl Default for BuildOptions {
     }
 }
 
+/// Options that only wasm-pack understands, found in the list passed through to cargo (#1614).
+///
+/// `BuildOptions` takes `allow_hyphen_values` and `trailing_var_arg`, so once an option it does
+/// not know appears (`--features`, typically) everything after it is collected into
+/// `extra_options` and handed to cargo. A wasm-pack option written after that point is either
+/// rejected by cargo or, for `--target`, silently read as a Rust target triple.
+fn misplaced_wasm_pack_option(extra_options: &[String]) -> Option<&str> {
+    // Cargo has no such options, so seeing one here is always a wasm-pack option in the
+    // wrong place. `--target`, `-t` and `-m` are deliberately absent: cargo claims them too
+    // (a triple, and `-m` is `--manifest-path`), so they are judged by their value below.
+    // `--release` and `--profile` are absent as well because they are cargo's own options.
+    const WASM_PACK_ONLY: [&str; 16] = [
+        "--out-dir",
+        "--out-name",
+        "--mode",
+        "--scope",
+        "--no-pack",
+        "--no-package",
+        "--no-typescript",
+        "--no-gitignore",
+        "--no-opt",
+        "--no-optimization",
+        "--weak-refs",
+        "--reference-types",
+        "--panic-unwind",
+        "--dev",
+        "--debug",
+        "--profiling",
+    ];
+
+    let mut options = extra_options.iter();
+    while let Some(option) = options.next() {
+        let (name, inline_value) = match option.split_once('=') {
+            Some((name, value)) => (name, Some(value)),
+            None => (option.as_str(), None),
+        };
+        if WASM_PACK_ONLY.contains(&name) || matches!(name, "-d" | "-s") {
+            return Some(option);
+        }
+        if matches!(name, "--target" | "-t" | "-m") {
+            let value = inline_value.or_else(|| options.next().map(String::as_str));
+            let misplaced = match name {
+                // `-m no-install` is wasm-pack's `--mode`; `-m path/to/Cargo.toml` is cargo's.
+                "-m" => value.is_some_and(|value| value.parse::<InstallMode>().is_ok()),
+                _ => value.is_some_and(|value| value.parse::<Target>().is_ok()),
+            };
+            if misplaced {
+                return Some(option);
+            }
+        }
+    }
+    None
+}
+
 type BuildStep = fn(&mut Build) -> Result<()>;
 
 impl Build {
     /// Construct a build command from the given options.
     pub fn try_from_opts(mut build_opts: BuildOptions) -> Result<Self> {
+        if let Some(option) = misplaced_wasm_pack_option(&build_opts.extra_options) {
+            bail!(
+                "`{option}` is a wasm-pack option, but it follows a cargo option and would be \
+                 passed to cargo: give wasm-pack options before the cargo ones \
+                 (`wasm-pack build --target web -- --features foo`)"
+            );
+        }
         if let Some(path) = &build_opts.path {
             if path.to_string_lossy().starts_with("--") {
                 let path = build_opts.path.take().unwrap();
@@ -628,5 +689,74 @@ mod tests {
         // (otherwise it would race with developer state).
         std::env::set_var("CARGO_HOME", tmp.path().join("nonexistent"));
         assert_eq!(read_cargo_build_target(tmp.path()), None);
+    }
+
+    #[test]
+    fn wasm_pack_options_after_a_cargo_option_are_reported() {
+        let opts = |args: &[&str]| args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>();
+
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "--out-dir", "pkg"])),
+            Some("--out-dir")
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "-d", "pkg"])),
+            Some("-d")
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "--target", "web"])),
+            Some("--target")
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "--target=nodejs"])),
+            Some("--target=nodejs")
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "--no-opt"])),
+            Some("--no-opt")
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "-m", "no-install"])),
+            Some("-m")
+        );
+        for profile in ["--dev", "--debug", "--profiling"] {
+            assert_eq!(
+                misplaced_wasm_pack_option(&opts(&["--features", "foo", profile])),
+                Some(profile)
+            );
+        }
+    }
+
+    #[test]
+    fn cargo_options_and_rust_target_triples_pass_through() {
+        let opts = |args: &[&str]| args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>();
+
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&[
+                "--features",
+                "foo",
+                "--target",
+                "wasm32-unknown-unknown"
+            ])),
+            None
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "--profile", "release"])),
+            None
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "--release"])),
+            None
+        );
+        // `-m` with a path is cargo's `--manifest-path`, not wasm-pack's `--mode`.
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo", "-m", "Cargo.toml"])),
+            None
+        );
+        assert_eq!(
+            misplaced_wasm_pack_option(&opts(&["--features", "foo"])),
+            None
+        );
+        assert_eq!(misplaced_wasm_pack_option(&opts(&[])), None);
     }
 }

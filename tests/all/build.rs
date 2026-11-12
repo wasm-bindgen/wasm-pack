@@ -428,3 +428,20 @@ fn build_crates_with_same_names() {
         .assert()
         .success();
 }
+
+#[test]
+fn a_wasm_pack_option_after_a_cargo_option_is_reported() {
+    let fixture = utils::fixture::js_hello_world();
+    fixture
+        .wasm_pack()
+        .arg("build")
+        .arg("--features")
+        .arg("foo")
+        .arg("--out-dir")
+        .arg("pkg")
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains(
+            "`--out-dir` is a wasm-pack option, but it follows a cargo option",
+        ));
+}
