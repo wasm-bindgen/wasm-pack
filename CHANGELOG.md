@@ -2,6 +2,19 @@
 
 ## 🤍 Unreleased
 
+- ### ✨ Features
+
+  - **Add `--package-name` flag and `package-name` Cargo.toml option - [MikeRomaa], [issue/427], [issue/949], [issue/1485], [pull/1626]**
+
+    Sets the `name` in the generated `package.json` instead of using the crate name, which allows npm
+    names that aren't valid crate names, such as `@scope/pkg.name`. Combines with `--scope`.
+
+    [issue/427]: https://github.com/wasm-bindgen/wasm-pack/issue/427
+    [issue/949]: https://github.com/wasm-bindgen/wasm-pack/issue/949
+    [issue/1485]: https://github.com/wasm-bindgen/wasm-pack/issue/1485
+    [pull/1626]: https://github.com/wasm-bindgen/wasm-pack/pull/1626
+    [MikeRomaa]: https://github.com/MikeRomaa
+
 - ### 🤕 Fixes
 
   - **Install the native Apple Silicon build with the installer script - [MattiasBuelens], [issue/1442], [pull/1623]**

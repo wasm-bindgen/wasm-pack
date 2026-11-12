@@ -3,6 +3,22 @@
 `wasm-pack` can be configured via the `package.metadata.wasm-pack` key in
 `Cargo.toml`. Every option has a default, and is not required.
 
+## Package name
+
+By default the `name` in the generated `package.json` is the crate name. Set
+`package-name` to use a different npm package name:
+
+```toml
+[package.metadata.wasm-pack]
+package-name = "hello.world"
+```
+
+The name may include a scope (`"@test/hello.world"`), but a scoped name can't be
+combined with the `--scope` flag. The `--package-name` flag of
+`wasm-pack build` takes precedence over this setting.
+
+## Profiles
+
 There are three profiles: `dev`, `profiling`, and `release`. These correspond to
 the `--dev`, `--profiling`, and `--release` flags passed to `wasm-pack build`.
 

@@ -691,3 +691,118 @@ fn it_ignores_wasm_bindgen_package_json_without_dependencies() {
     let deps = write_package_json_over(r#"{"type": "module", "dependencies": {}}"#);
     assert!(deps.is_none());
 }
+
+fn js_hello_world_with_package_name_key(package_name: &str) -> fixture::Fixture {
+    let fixture = fixture::js_hello_world();
+    let cargo_toml = fs::read_to_string(fixture.path.join("Cargo.toml")).unwrap();
+    fixture.file(
+        "Cargo.toml",
+        format!(
+            "{}\n[package.metadata.wasm-pack]\npackage-name = \"{}\"\n",
+            cargo_toml, package_name
+        ),
+    );
+    fixture
+}
+
+fn package_json_name(
+    fixture: &fixture::Fixture,
+    package_name: Option<&str>,
+    scope: Option<&str>,
+) -> String {
+    let out_dir = fixture.path.join("pkg");
+    let mut crate_data = manifest::CrateData::new(&fixture.path, None).unwrap();
+    crate_data.set_package_name(package_name.map(String::from));
+    wasm_pack::command::utils::create_pkg_dir(&out_dir, false).unwrap();
+    crate_data
+        .write_package_json(&out_dir, &scope.map(String::from), false, Target::Bundler)
+        .unwrap();
+    utils::manifest::read_package_json(&fixture.path, &out_dir)
+        .unwrap()
+        .name
+}
+
+#[test]
+fn it_uses_the_package_name_override() {
+    let fixture = fixture::js_hello_world();
+    assert_eq!(
+        package_json_name(&fixture, Some("pkg.name"), None),
+        "pkg.name"
+    );
+}
+
+#[test]
+fn it_combines_the_package_name_override_with_scope() {
+    let fixture = fixture::js_hello_world();
+    assert_eq!(
+        package_json_name(&fixture, Some("pkg.name"), Some("test")),
+        "@test/pkg.name"
+    );
+}
+
+#[test]
+fn it_uses_the_package_name_from_cargo_toml() {
+    let fixture = js_hello_world_with_package_name_key("pkg.name");
+    let manifest_and_keys =
+        manifest::CrateData::parse_crate_data(&fixture.path.join("Cargo.toml")).unwrap();
+    assert!(manifest_and_keys.unused_keys.is_empty());
+    assert_eq!(package_json_name(&fixture, None, None), "pkg.name");
+    assert_eq!(
+        package_json_name(&fixture, None, Some("test")),
+        "@test/pkg.name"
+    );
+}
+
+#[test]
+fn it_accepts_a_scoped_package_name_from_cargo_toml() {
+    let fixture = js_hello_world_with_package_name_key("@test/pkg.name");
+    assert_eq!(package_json_name(&fixture, None, None), "@test/pkg.name");
+}
+
+#[test]
+fn it_prefers_the_package_name_override_over_cargo_toml() {
+    let fixture = js_hello_world_with_package_name_key("from-cargo-toml");
+    assert_eq!(
+        package_json_name(&fixture, Some("from-cli"), None),
+        "from-cli"
+    );
+}
+
+#[test]
+fn it_rejects_a_scoped_package_name_combined_with_scope() {
+    let fixture = fixture::js_hello_world();
+    let mut crate_data = manifest::CrateData::new(&fixture.path, None).unwrap();
+    crate_data.set_package_name(Some("@other/pkg.name".to_string()));
+    let err = crate_data
+        .npm_name(&Some("test".to_string()))
+        .unwrap_err()
+        .to_string();
+    assert!(err.contains("already has a scope"), "{}", err);
+}
+
+#[test]
+fn it_rejects_invalid_package_names() {
+    let fixture = fixture::js_hello_world();
+    let mut crate_data = manifest::CrateData::new(&fixture.path, None).unwrap();
+    let too_long = "a".repeat(215);
+    for name in [
+        "Pkg.Name",
+        "pkg name",
+        ".pkg",
+        "_pkg",
+        "pkg~name",
+        "",
+        "@test",
+        "@test/",
+        "@/pkg",
+        "@Test/pkg",
+        too_long.as_str(),
+    ] {
+        crate_data.set_package_name(Some(name.to_string()));
+        assert!(
+            crate_data.npm_name(&None).is_err(),
+            "`{}` should be rejected",
+            name
+        );
+    }
+}

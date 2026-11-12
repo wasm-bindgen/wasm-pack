@@ -1,5 +1,6 @@
 use crate::utils;
 use assert_cmd::prelude::*;
+use predicates::boolean::PredicateBooleanExt;
 use std::fs;
 use std::path::Path;
 
@@ -427,4 +428,39 @@ fn build_crates_with_same_names() {
         .arg("build")
         .assert()
         .success();
+}
+
+#[test]
+fn build_rejects_an_invalid_package_name_before_compiling() {
+    let fixture = utils::fixture::js_hello_world();
+    fixture
+        .wasm_pack()
+        .arg("build")
+        .arg("--package-name")
+        .arg("Not Valid")
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains("invalid npm package name"))
+        .stderr(predicates::str::contains("Compiling to Wasm").not());
+}
+
+#[test]
+fn build_with_package_name_and_scope() {
+    let fixture = utils::fixture::js_hello_world();
+    fixture.install_local_wasm_bindgen();
+    fixture
+        .wasm_pack()
+        .arg("build")
+        .arg("--package-name")
+        .arg("pkg.name")
+        .arg("--scope")
+        .arg("test")
+        .assert()
+        .success();
+    let package_json = fs::read_to_string(fixture.path.join("pkg/package.json")).unwrap();
+    assert!(
+        package_json.contains(r#""name": "@test/pkg.name""#),
+        "{}",
+        package_json
+    );
 }

@@ -116,6 +116,25 @@ the npm documentation [here][npm-scope-documentation].
 
 [npm-scope-documentation]: https://docs.npmjs.com/misc/scope
 
+## Package name
+
+By default the `name` in `package.json` is the crate name. The optional
+`--package-name` argument replaces it. This is useful when the npm name isn't a
+valid crate name, for example because it contains a `.`:
+
+```
+wasm-pack build examples/js-hello-world --package-name hello.world
+```
+
+`--package-name` can be combined with `--scope`, so adding `--scope test` to the
+command above creates a package called `@test/hello.world`. The name can also be
+set in `Cargo.toml` with
+[`package-name`](../cargo-toml-configuration.md#package-name); the
+`--package-name` flag takes precedence.
+
+`--package-name` only changes the package name. To change the generated file
+names, use `--out-name`.
+
 ## Mode
 
 The `build` command accepts an optional `--mode` argument.
