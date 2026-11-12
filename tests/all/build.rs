@@ -439,8 +439,8 @@ fn build_rejects_an_invalid_package_name_before_compiling() {
         .arg("Not Valid")
         .assert()
         .failure()
-        .stderr(predicates::str::contains("invalid npm package name"));
-    assert!(!fixture.path.join("target").exists());
+        .stderr(predicates::str::contains("invalid npm package name"))
+        .stderr(predicates::str::contains("Compiling to Wasm").not());
 }
 
 #[test]
